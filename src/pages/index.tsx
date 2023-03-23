@@ -11,9 +11,10 @@ export default function Home() {
   //const [hasData, setHasData] = useState(false)
 
   const getData = async () => {
-    const res = await fetch("https://jsonplaceholder.typicode.com/todos/1")
+    const res = await fetch("http://localhost:8080/equipment/1")
     const data = await res.json()
-    setData(data.title)
+    const str = JSON.stringify(data)
+    setData(str)
   }
   
   // test button
