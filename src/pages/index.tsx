@@ -1,27 +1,27 @@
-import Head from 'next/head'
-import Image from 'next/image'
-import { Inter } from 'next/font/google'
-import styles from '@/styles/Home.module.css'
-import { useState } from 'react'
+import Head from 'next/head';
+// import Image from 'next/image';
+// import { Inter } from 'next/font/google';
+import styles from '@/styles/Home.module.css';
+import { useState } from 'react';
 
-const inter = Inter({ subsets: ['latin'] })
-let [data, setdata]  = useState()
+// const inter = Inter({ subsets: ['latin'] });
+// const [data, setdata] = useState();
 
 export default function Home() {
-  const [data, setData] = useState("Loading...")
-  //const [hasData, setHasData] = useState(false)
+  const [data, setData] = useState('Loading...');
+  // const [hasData, setHasData] = useState(false)
 
   const getData = async () => {
-    const res = await fetch("http://localhost:8080/equipment/1")
-    const data = await res.json()
-    const str = JSON.stringify(data)
-    setData(str)
-  }
-  
+    const res = await fetch('http://localhost:8080/equipment/1');
+    const dataObject = await res.json();
+    const str = JSON.stringify(dataObject);
+    setData(str);
+  };
+
   // test button
-  /* const changeData = () => {
-    setData("Hello World!")
-  } */
+  // const changeData = () => {
+  //   setData('Hello World!');
+  // };
 
   return (
     <>
@@ -33,8 +33,9 @@ export default function Home() {
       </Head>
       <main className={styles.main}>
         <p>{data}</p>
-        <button onClick={getData}>Click Me</button>
+        <button type="submit" onClick={getData}>Click Me</button>
+        {/* is "submit" the correct button type here? */}
       </main>
     </>
-  )
+  );
 }
