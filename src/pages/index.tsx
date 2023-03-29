@@ -1,11 +1,6 @@
 import Head from 'next/head';
-// import Image from 'next/image';
-// import { Inter } from 'next/font/google';
 import styles from '@/styles/Home.module.css';
 import { useState } from 'react';
-
-// const inter = Inter({ subsets: ['latin'] });
-// const [data, setdata] = useState();
 
 export default function Home() {
   const [data, setData] = useState('Loading...');
@@ -18,11 +13,6 @@ export default function Home() {
     setData(str);
   };
 
-  // test button
-  // const changeData = () => {
-  //   setData('Hello World!');
-  // };
-
   return (
     <>
       <Head>
@@ -34,7 +24,6 @@ export default function Home() {
       <main className={styles.main}>
         <p>{data}</p>
         <button type="submit" onClick={getData}>Click Me</button>
-        {/* is "submit" the correct button type here? */}
       </main>
     </>
   );
