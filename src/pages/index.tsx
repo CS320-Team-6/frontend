@@ -1,16 +1,41 @@
 import Head from 'next/head';
 import styles from '@/styles/Home.module.css';
 import { useState } from 'react';
-import { TextField } from '@mui/material';
+import { TextField, MenuItem, Box } from '@mui/material';
+//import { DatePicker } from '@mui/x-date-pickers';
+//import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
+
 
 export default function Home() {
-  const [mail, setMail] = useState('Loading...');
+  const [Id, setId] = useState('');
+  const [date, setDate] = useState(new Date());
+  const [priority, setPriority] = useState('Loading...'); // LOW, MEDIUM, HIGH, URGENT
+  //const [status, setStatus] = useState('');
+  //const [mail, setMail] = useState('Loading...');
   const [data, setData] = useState('Loading...');
   const [sev, setSev] = useState('Small');
   const URL = 'http://urepairfreejohn1-env.eba-we2tn3yk.us-east-2.elasticbeanstalk.com/equipment/1'
     
   // const [hasData, setHasData] = useState(false)
+  const severities = [
+    {
+      value: 'LOW',
+      label: 'Low',
+    },
+    {
+      value: 'MEDIUM',
+      label: 'Medium',
+    },
+    {
+      value: 'HIGH',
 
+      label: 'High',
+    },
+    {
+      value: 'URGENT',
+      label: 'Urgent',
+    },
+  ];
   const getData = async () => {
     console.log('getData\n');
     const res = await fetch(URL);
@@ -28,12 +53,15 @@ export default function Home() {
     const res = await fetch(URL, requestOptions);
   };
 
-  const handleMailChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setMail(event.target.value);
+  const handleIdChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setId(event.target.value);
   };
   const handleSevChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSev(event.target.value);
   };
+  /* const handleDateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setDate(event.target.value);
+  }; */
 
 
   return (
@@ -45,24 +73,47 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main className={styles.main}>
-        <h1 className={styles.title}>
-          Welcome to <a href="https://nextjs.org">Next.js!</a>
-        </h1>
-        <TextField
-          id="standard-basic"
-          label="EMail"
-          value={mail}
-          onChange={handleMailChange}
-        />
-        <TextField
-          id="standard-basic"
-          label="Severity"
-          value={sev}
-          onChange={handleSevChange}
-        />
-    {mail}
-    {sev}
-        {/* <button type="submit" onClick={()=>setData("pizza")}>Register Input</button> */}
+        <div>
+            <h1 className={styles.title}>
+              Welcome to URepair!
+            </h1>
+            <Box
+              component="form"
+              sx={{
+                '& .MuiTextField-root': { m: 1, width: '25ch' },
+              }}
+              noValidate
+              autoComplete="off"
+            >
+              <TextField
+                id="standard-basic"
+                label="Equipment-Id"
+                value={Id}
+                onChange={handleIdChange}
+              />
+              <TextField
+                id="outlined-select-currency"
+                select
+                label="Severity"
+                defaultValue="LOW"
+                onChange={handleSevChange}
+              >
+                {severities.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>
+                    {option.label}
+                  </MenuItem>
+                ))}
+              </TextField>
+              <TextField
+                id="standard-basic"
+                label="Date"
+                value={date}
+                //onChange={handleDateChange}
+              />
+            </Box>
+            {Id}
+            {sev}
+        </div>
       </main>
     </>
   );
