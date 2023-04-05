@@ -1,6 +1,7 @@
 /* TODO: determine if some of these styles are unnecessary */
 
 .main {
+  background: white;
   display: flex;
   flex-direction: column;
   justify-content: space-between;

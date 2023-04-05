@@ -1,17 +1,40 @@
 import Head from 'next/head';
 import styles from '@/styles/Home.module.css';
 import { useState } from 'react';
+import { TextField } from '@mui/material';
 
 export default function Home() {
+  const [mail, setMail] = useState('Loading...');
   const [data, setData] = useState('Loading...');
+  const [sev, setSev] = useState('Small');
+  const URL = 'http://urepairfreejohn1-env.eba-we2tn3yk.us-east-2.elasticbeanstalk.com/equipment/1'
+    
   // const [hasData, setHasData] = useState(false)
 
   const getData = async () => {
-    const res = await fetch('http://localhost:8080/equipment/1');
+    console.log('getData\n');
+    const res = await fetch(URL);
     const dataObject = await res.json();
     const str = JSON.stringify(dataObject);
     setData(str);
   };
+
+  const postData = async () => {
+    const requestOptions = {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title: 'React PUT Request Example' })
+    };
+    const res = await fetch(URL, requestOptions);
+  };
+
+  const handleMailChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setMail(event.target.value);
+  };
+  const handleSevChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSev(event.target.value);
+  };
+
 
   return (
     <>
@@ -22,8 +45,24 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main className={styles.main}>
-        <p>{data}</p>
-        <button type="submit" onClick={getData}>Click Me</button>
+        <h1 className={styles.title}>
+          Welcome to <a href="https://nextjs.org">Next.js!</a>
+        </h1>
+        <TextField
+          id="standard-basic"
+          label="EMail"
+          value={mail}
+          onChange={handleMailChange}
+        />
+        <TextField
+          id="standard-basic"
+          label="Severity"
+          value={sev}
+          onChange={handleSevChange}
+        />
+    {mail}
+    {sev}
+        {/* <button type="submit" onClick={()=>setData("pizza")}>Register Input</button> */}
       </main>
     </>
   );
