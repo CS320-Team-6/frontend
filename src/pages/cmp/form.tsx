@@ -43,7 +43,7 @@ export default function Form() {
       },
       body: JSON.stringify(ticket)
     };
-    fetch(URL, requestOptions)
+    await fetch(URL, requestOptions)
       .then(response => setSuccessfullSub(response.ok))
       .catch(error => console.log(error));
     setHasRes(true);
@@ -63,13 +63,6 @@ export default function Form() {
   const handlePriorityChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setPriority(event.target.value);
   };
-
-   //useEffect(() => setBtnTxt("Loading..."), [submitted]);
-   /* useEffect(() => {
-      //setHasRes(true)
-      setBtnTxt("Submit Another Ticket");
-      console.log("useEffect: hasRes = true");
-   }, [successfullSub]); */
 
   return (
     <>
