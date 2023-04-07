@@ -7,7 +7,7 @@ import Nav from './cmp/nav'
 import { Button } from '@mui/material';
 
 export default function Home() {
-  const [isStaff, setIsStaff] = useState(true);
+  const [isStaff, setIsStaff] = useState(false);
   const [data, setData] = useState(''); // not used
   const URL = 'http://urepair-env.eba-hnfscrcj.us-east-2.elasticbeanstalk.com/issue'
 
@@ -32,13 +32,14 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main className={styles.main}>
+        {/* <Prop test="pizza" /> */}
         {/* <Nav staff={isStaff} onStaffChange={handleStaffChange}/> */}
         <Button
           size="large"
           variant="contained"
           onClick={() => setIsStaff(!isStaff)}
         >
-            Staff Login
+            {isStaff ? "User" : "Staff"} Login
         </Button>
         {isStaff ? <Staff /> : <Form />}
       </main>
