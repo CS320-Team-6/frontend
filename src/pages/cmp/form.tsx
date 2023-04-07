@@ -1,51 +1,21 @@
-import Head from 'next/head';
 import styles from '@/styles/Home.module.css';
-import { useState } from 'react';
-import { TextField, MenuItem, Box, Button } from '@mui/material';
+import { useEffect, useState } from 'react';
+import { TextField, MenuItem, Box, Button, Alert } from '@mui/material';
+import priorities from './priorities.json'
 
 export default function Form() {
   const [Id, setId] = useState('');
   const [date, setDate] = useState(new Date());
   const [priority, setPriority] = useState('LOW'); // LOW, MEDIUM, HIGH, URGENT
-  const [data, setData] = useState(''); // not used
+  const [submitted, setSubmitted] = useState(false);
+  const [successfullSub, setSuccessfullSub] = useState(false);
+  const [hasRes, setHasRes] = useState(false);
+  const [btnTxt, setBtnTxt] = useState("Submit");
   const URL = 'http://urepair-env.eba-hnfscrcj.us-east-2.elasticbeanstalk.com/issue'
-  const dateJSON = {
-    year: date.getFullYear(),
-    month: date.getMonth() + 1, // add 1 because getMonth() returns 0-based index
-    day: date.getDate(),
-    hour: date.getHours(),
-    minute: date.getMinutes()
-  };
-
-  const priorities = [
-    {
-      value: 'LOW',
-      label: 'Low',
-    },
-    {
-      value: 'MEDIUM',
-      label: 'Medium',
-    },
-    {
-      value: 'HIGH',
-
-      label: 'High',
-    },
-    {
-      value: 'URGENT',
-      label: 'Urgent',
-    },
-  ];
-
-  const getData = async () => {
-    console.log('getData\n');
-    const res = await fetch(URL);
-    const dataObject = await res.json();
-    const str = JSON.stringify(dataObject);
-    setData(str);
-  };
 
   const postData = async () => {
+   setSubmitted(true);
+   setBtnTxt("Loading...");
     setDate(new Date());
     const ticket = {
       "id": 1,
@@ -65,7 +35,6 @@ export default function Form() {
       "resolutionDetails": null,
       "notes": null
     };
-    console.log(JSON.stringify(ticket));
     const requestOptions = {
       method: 'POST',
       headers: { 
@@ -75,10 +44,18 @@ export default function Form() {
       body: JSON.stringify(ticket)
     };
     fetch(URL, requestOptions)
-      .then(response => response.json())
-      .then(data => console.log(JSON.stringify(data)))
+      .then(response => setSuccessfullSub(response.ok))
       .catch(error => console.log(error));
+    setHasRes(true);
+    setBtnTxt("Submit Another Ticket");
   };
+
+  const newTicket = () => {
+      setSubmitted(false);
+      setSuccessfullSub(false);
+      setHasRes(false);
+      setBtnTxt("Submit");
+   };
 
   const handleIdChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setId(event.target.value);
@@ -87,6 +64,12 @@ export default function Form() {
     setPriority(event.target.value);
   };
 
+   //useEffect(() => setBtnTxt("Loading..."), [submitted]);
+   /* useEffect(() => {
+      //setHasRes(true)
+      setBtnTxt("Submit Another Ticket");
+      console.log("useEffect: hasRes = true");
+   }, [successfullSub]); */
 
   return (
     <>
@@ -120,21 +103,21 @@ export default function Form() {
           </MenuItem>
             ))}
           </TextField>
-          {/* <TextField
-            id="standard-basic"
-            label="Date"
-            value={date}
-            disabled
-            //onChange={handleDateChange}
-          /> */}
         </Box>
-        {/* data && <p>{data}</p> */}
         <Button 
           variant="contained" 
-          onClick={postData}
+          onClick={!submitted ? postData : newTicket}
         >
-          Submit
+          {btnTxt}
         </Button>
+        {
+         hasRes 
+            && 
+         <Alert 
+            severity={successfullSub ? "success" : "error"}
+         >
+            {successfullSub ? "Ticket Submitted" : "Ticket Submission Failed"}
+         </Alert>}
     </>
   );
 }

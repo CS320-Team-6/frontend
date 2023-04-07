@@ -49,7 +49,7 @@ export default function MyTable(props: Props) {
             <TableCell>{row.id}</TableCell>
             <TableCell>{row.equipmentId}</TableCell>
             <TableCell>{row.status}</TableCell>
-            <TableCell>{`${row.dateReported.month}/${row.dateReported.day}/${row.dateReported.year} ${row.dateReported.hour}:${row.dateReported.minute}`}</TableCell>
+            <TableCell>{`${row.dateReported.month}/${row.dateReported.day}/${row.dateReported.year}`}</TableCell>
             <TableCell>{row.priority}</TableCell>
             <TableCell>{row.description}</TableCell>
             <TableCell>{row.assignedTo}</TableCell>

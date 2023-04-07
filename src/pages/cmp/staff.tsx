@@ -1,7 +1,7 @@
 import Head from 'next/head';
 import styles from '@/styles/Home.module.css';
 import { useState } from 'react';
-import { Button, Table, TableBody, TableCell, TableHead, TableRow } from '@mui/material';
+import { Button } from '@mui/material';
 import MyTable from './table';
 
 interface Issue {
