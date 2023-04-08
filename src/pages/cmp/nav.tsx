@@ -12,9 +12,9 @@ export default function Nav(props: { onValueChange: (arg0: boolean) => boolean; 
          <Button
          size="large"
          variant="contained"
-         onClick={() => setIsStaff(false)}
+         onClick={handleStaffChange}
          >
-            Staff Login
+            {isStaff ? "User Report" : "Staff Login"}
          </Button>
       </>
    );

@@ -73,6 +73,9 @@ export default function Form() {
           component="form"
           sx={{
             '& .MuiTextField-root': { m: 1, width: '25ch' },
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
           }}
           noValidate
           autoComplete="off"
@@ -100,6 +103,7 @@ export default function Form() {
         <Button 
           variant="contained" 
           onClick={!submitted ? postData : newTicket}
+          size="large"
         >
           {btnTxt}
         </Button>

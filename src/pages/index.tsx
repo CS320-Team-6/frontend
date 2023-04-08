@@ -5,6 +5,15 @@ import  Form from './cmp/form'
 import Staff from './cmp/staff'
 import Nav from './cmp/nav'
 import { Button } from '@mui/material';
+import { createTheme, ThemeProvider } from '@mui/material/styles';
+
+const theme = createTheme({
+  palette: {
+    primary: {
+      main: "#881c1c",
+    },
+  },
+});
 
 export default function Home() {
   const [isStaff, setIsStaff] = useState(false);
@@ -20,17 +29,22 @@ export default function Home() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <main className={styles.main}>
-        {/* <Nav staff={isStaff} onStaffChange={handleStaffChange}/> */}
-        <Button
-          size="large"
-          variant="contained"
-          onClick={handleStaffChange}
-        >
-            {isStaff ? "User" : "Staff"} Login
-        </Button>
-        {isStaff ? <Staff /> : <Form />}
-      </main>
+      <ThemeProvider theme={theme}>
+        <main className={styles.main}>
+          {/* <Nav staff={isStaff} onStaffChange={handleStaffChange}/> */}
+          <div className={styles.nav}>
+            <Button
+              size="large"
+              variant="contained"
+              onClick={handleStaffChange}
+              className={styles.staffLogin}
+            >
+                {isStaff ? "User" : "Staff"} Login
+            </Button>
+          </div>
+          {isStaff ? <Staff /> : <Form />}
+        </main>
+      </ThemeProvider>
     </>
   );
 }
