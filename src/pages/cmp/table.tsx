@@ -1,5 +1,7 @@
 import React from 'react';
-import { Table, TableBody, TableCell, TableHead, TableRow } from '@mui/material';
+import {
+  Table, TableBody, TableCell, TableHead, TableRow,
+} from '@mui/material';
 
 interface Issue {
   id: number;
@@ -20,11 +22,11 @@ interface Issue {
   notes: string | null;
 }
 
-interface Props {
+interface TableProps {
   issues: Issue[];
 }
 
-export default function MyTable(props: Props) {
+export default function MyTable(props: TableProps) {
   const { issues } = props;
 
   return (

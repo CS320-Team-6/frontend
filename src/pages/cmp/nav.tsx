@@ -1,21 +1,24 @@
 import { Button } from '@mui/material';
 import { useState } from 'react';
 
-export default function Nav(props: { onValueChange: (arg0: boolean) => boolean; }) {
+interface NavProps {
+   onValueChange: (arg0: boolean) => boolean;
+}
+
+export default function Nav(props: NavProps) {
+  const { onValueChange } = props;
    const [isStaff, setIsStaff] = useState(true);
    const handleStaffChange = () => {
       setIsStaff(!isStaff);
-      props.onValueChange(isStaff);
+      onValueChange(isStaff);
    };
-   return (
-      <>
-         <Button
-         size="large"
-         variant="contained"
-         onClick={handleStaffChange}
-         >
-            {isStaff ? "User Report" : "Staff Login"}
-         </Button>
-      </>
-   );
+  return (
+    <Button
+      size="large"
+      variant="contained"
+      onClick={handleStaffChange}
+    >
+      {isStaff ? 'User Report' : 'Staff Login'}
+    </Button>
+  );
 }

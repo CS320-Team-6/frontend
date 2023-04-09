@@ -1,24 +1,22 @@
 import Head from 'next/head';
 import styles from '@/styles/Home.module.css';
 import { useState } from 'react';
-import  Form from './cmp/form'
-import Staff from './cmp/staff'
-import Nav from './cmp/nav'
 import { Button } from '@mui/material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
+import Form from './cmp/form';
+import Staff from './cmp/staff';
+// import Nav from './cmp/nav';
 
 const theme = createTheme({
   palette: {
     primary: {
-      main: "#881c1c",
+      main: '#881c1c',
     },
   },
 });
 
 export default function Home() {
   const [isStaff, setIsStaff] = useState(false);
-  const URL = 'http://urepair-env.eba-hnfscrcj.us-east-2.elasticbeanstalk.com/issue'
-
   const handleStaffChange = () => setIsStaff(!isStaff);
 
   return (
@@ -39,7 +37,9 @@ export default function Home() {
               onClick={handleStaffChange}
               className={styles.staffLogin}
             >
-                {isStaff ? "User" : "Staff"} Login
+              {isStaff ? 'User' : 'Staff'}
+              {' '}
+              Login
             </Button>
           </div>
           {isStaff ? <Staff /> : <Form />}
