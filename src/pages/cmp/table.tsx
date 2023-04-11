@@ -93,6 +93,7 @@ export default function MyTable(props: TableProps) {
           <TableCell>Resolution Details</TableCell>
           <TableCell>Notes</TableCell>
           <TableCell></TableCell>
+          <TableCell></TableCell>
         </TableRow>
       </TableHead>
       <TableBody>
@@ -112,6 +113,7 @@ export default function MyTable(props: TableProps) {
                   <TableCell>{row.resolutionDetails}</TableCell>
                   <TableCell>{row.notes}</TableCell>
                   <TableCell><Button onClick={() => handleEditClick(row)}>Edit</Button></TableCell>
+                  <TableCell><Button disabled>Cancel</Button></TableCell>
                 </TableRow>
             }
             { 
@@ -141,6 +143,7 @@ export default function MyTable(props: TableProps) {
                     <TableCell><TextField disabled value={row.resolutionDetails}/></TableCell>
                     <TableCell><TextField disabled value={row.notes}/></TableCell>
                     <TableCell><Button variant="outlined" onClick={() => handleEditSave(row)}>Save</Button></TableCell>
+                    <TableCell><Button onClick={() =>setEditId('')}>Cancel</Button></TableCell>
                   </TableRow>
                 </>
               }
