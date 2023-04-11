@@ -30,6 +30,7 @@ export default function Staff() {
   const getData = async () => {
     const res = await fetch(URL);
     const resJSON = await res.json();
+    resJSON.issue_table.sort((a: Issue, b: Issue) => a.id - b.id);
     setData(resJSON.issue_table);
     setHasData(true);
   };
