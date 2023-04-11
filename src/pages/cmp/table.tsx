@@ -82,7 +82,7 @@ export default function MyTable(props: TableProps) {
     <Table>
       <TableHead>
         <TableRow>
-          <TableCell>ID</TableCell>
+          <TableCell>Ticket ID</TableCell>
           <TableCell>Equipment ID</TableCell>
           <TableCell>Status</TableCell>
           <TableCell>Date Reported</TableCell>
