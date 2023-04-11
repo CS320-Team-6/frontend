@@ -30,8 +30,7 @@ export default function Staff() {
   const getData = async () => {
     const res = await fetch(URL);
     const resJSON = await res.json();
-    const { ISSUE_TABLE } = resJSON;
-    setData(ISSUE_TABLE);
+    setData(resJSON.issue_table);
     setHasData(true);
   };
 

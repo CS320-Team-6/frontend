@@ -46,7 +46,7 @@ export default function MyTable(props: TableProps) {
         </TableRow>
       </TableHead>
       <TableBody>
-        {issues.map((row: Issue) => (
+        {issues && issues.map((row: Issue) => (
           <TableRow key={row.id}>
             <TableCell>{row.id}</TableCell>
             <TableCell>{row.equipmentId}</TableCell>
