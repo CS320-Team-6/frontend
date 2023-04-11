@@ -51,7 +51,7 @@ export default function Staff() {
             </Button>
             )
 }
-      {hasData && <MyTable issues={data} />}
+      {hasData && <MyTable URL={URL} issues={data} getData={getData}/>}
     </>
   );
 }
