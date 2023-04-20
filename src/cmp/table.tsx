@@ -40,10 +40,10 @@ export default function MyTable(props: TableProps) {
   const [status, setStatus] = useState('NEW'); // NEW, IN_PROGRESS, RESOLVED
   // const [date, setDate] = useState(new MyDate(null));
   const [priority, setPriority] = useState('LOW'); // LOW, MEDIUM, HIGH, URGENT
-  const [assignedTo, setAssignedTo] = useState(''); // Staff member
-  const [dateResolved, setDateResolved] = useState(new Date());
-  const [resolutionDetails, setResolutionDetails] = useState('');
-  const [notes, setNotes] = useState('');
+  // const [assignedTo, setAssignedTo] = useState(''); // Staff member
+  // const [dateResolved, setDateResolved] = useState(new Date());
+  // const [resolutionDetails, setResolutionDetails] = useState('');
+  // const [notes, setNotes] = useState('');
 
   const handleEditClick = (issue: Issue) => {
     setEditId(String(issue.id));
@@ -74,8 +74,12 @@ export default function MyTable(props: TableProps) {
     console.log(resPost.ok);
   };
 
-  const handleStatusChange = (event: React.ChangeEvent<HTMLInputElement>) => setStatus(event.target.value);
-  const handlePriorityChange = (event: React.ChangeEvent<HTMLInputElement>) => setPriority(event.target.value);
+  const handleStatusChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setStatus(event.target.value);
+  };
+  const handlePriorityChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setPriority(event.target.value);
+  };
 
   return (
     <Table>
