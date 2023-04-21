@@ -81,42 +81,133 @@ export default function MyTable(props: TableProps) {
     setPriority(event.target.value);
   };
 
-  const [sort, setSort] = useState('id');
+  const [sortID, setSortID] = useState('');
+  const [sortEquipmentID, setSortEquipmentID] = useState('');
+  const [sortStatus, setSortStatus] = useState('');
+  const [sortDateReported, setSortDateReported] = useState('');
+  const [sortPriority, setSortPriority] = useState('');
+  const [sortDateResolved, setSortDateResolved] = useState('');
 
-  const handleSortChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSort(event.target.value);
-    console.log(event.target.value);
-    // sort issues
-    issues.sort((a, b) => {
-      if (event.target.value === 'id') {
-        return a.id - b.id;
-      }
-      if (event.target.value === 'equipmentId') {
-        return a.equipmentId - b.equipmentId;
-      }
-      return 0;
-    });
+  const handleSortIDChange = () => {
+    resetSort();
+    if (sortID === '') {
+      setSortID('↑');
+      issues.sort((a, b) => a.id - b.id);
+    } else if (sortID === '↑') {
+      setSortID('↓');
+      issues.sort((a, b) => b.id - a.id);
+    } else {
+      setSortID('');
+      issues.sort((a, b) => a.id - b.id);
+    }
   }
+    const handleSortEquipmentIDChange = () => {
+      resetSort();
+      if (sortEquipmentID === '') {
+        setSortEquipmentID('↑');
+        issues.sort((a, b) => a.equipmentId - b.equipmentId);
+      } else if (sortEquipmentID === '↑') {
+        setSortEquipmentID('↓');
+        issues.sort((a, b) => b.equipmentId - a.equipmentId);
+      } else {
+        setSortEquipmentID('');
+        issues.sort((a, b) => a.id - b.id);
+      }
+    }
+    const handleSortStatusChange = () => {
+      resetSort();
+      // possible values for status are: NEW, IN_PROGRESS, RESOLVED, CLOSED
+      // when sorting, we want to sort by the order of the above list
+      const order = ['NEW', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'];
+
+        if (sortStatus === '') {
+          setSortStatus('↑');
+          issues.sort((a, b) => order.indexOf(a.status) - order.indexOf(b.status));
+        }
+        else if (sortStatus === '↑') {
+          setSortStatus('↓');
+          issues.sort((a, b) => order.indexOf(b.status) - order.indexOf(a.status));
+        }
+        else {
+          setSortStatus('');
+          issues.sort((a, b) => a.id - b.id);
+        }
+    }
+    // methods to compare two dates of type MyDate
+    const compareDates = (a: MyDate, b: MyDate) => {
+      if (a.year === b.year) {
+        if (a.month === b.month) {
+          if (a.day === b.day) {
+              return 0;
+          }
+          return a.day - b.day;
+        }
+        return a.month - b.month;
+      }
+      return a.year - b.year;
+    }
+    const handleSortDateReportedChange = () => {
+      resetSort();
+      // sort dates by chronological order
+      if (sortDateReported === '') {
+        setSortDateReported('↑');
+        issues.sort((a, b) => compareDates(b.dateReported, a.dateReported));
+      }
+      else if (sortDateReported === '↑') {
+        setSortDateReported('↓');
+        issues.sort((a, b) => compareDates(a.dateReported, b.dateReported));
+      }
+      else {
+        setSortDateReported('');
+        issues.sort((a, b) => a.id - b.id);
+      }
+    }
+    const handleSortPriorityChange = () => {
+      resetSort();
+      // possible values for priority are: HIGH, MEDIUM, LOW
+      // when sorting, we want to sort by the order of the above list
+      const order = ['HIGH', 'MEDIUM', 'LOW'];
+
+      if (sortPriority === '') {
+        setSortPriority('↑');
+        issues.sort((a, b) => order.indexOf(a.priority) - order.indexOf(b.priority));
+      }
+      else if (sortPriority === '↑') {
+        setSortPriority('↓');
+        issues.sort((a, b) => order.indexOf(b.priority) - order.indexOf(a.priority));
+      }
+      else {
+        setSortPriority('');
+        issues.sort((a, b) => a.id - b.id);
+      }
+    }
+    const resetSort = () => {
+      setSortID('');
+      setSortEquipmentID('');
+      setSortStatus('');
+      setSortDateReported('');
+      setSortPriority('');
+      setSortDateResolved('');
+    }
+
+
 
   return (
     <Table>
       <TableHead>
         <TableRow>
-          <TableCell>Sort By:</TableCell>
-          <TableCell><TextField select value={sort} onChange={handleSortChange}>
-            <MenuItem key="id" value="id">
-              Ticket ID
-            </MenuItem>
-            <MenuItem key="equipmentId" value="equipmentId">
-              Equipment ID
-            </MenuItem>
-          </TextField></TableCell>
-        </TableRow>
-        <TableRow>
-          <TableCell>Ticket ID</TableCell>
-          <TableCell>Equipment ID</TableCell>
-          <TableCell>Status</TableCell>
-          <TableCell>Date Reported</TableCell>
+          <TableCell>
+            <Button onClick={handleSortIDChange}>Ticket ID {sortID}</Button>
+          </TableCell>
+          <TableCell>
+            <Button onClick={handleSortEquipmentIDChange}>Equipment ID {sortEquipmentID}</Button>
+          </TableCell>
+          <TableCell>
+            <Button onClick={handleSortStatusChange}>Status {sortStatus}</Button>
+          </TableCell>
+          <TableCell>
+            <Button onClick={handleSortDateReportedChange}>Date Reported {sortDateReported}</Button>
+          </TableCell>
           <TableCell>Priority</TableCell>
           <TableCell>Description</TableCell>
           <TableCell>Assigned To</TableCell>
