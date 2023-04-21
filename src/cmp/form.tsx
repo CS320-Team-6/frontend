@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import {
   TextField, MenuItem, Box, Button, Alert,
@@ -15,7 +15,6 @@ export default function Form() {
   const [hasRes, setHasRes] = useState(false);
   const [btnTxt, setBtnTxt] = useState('Submit');
   const URL = 'http://urepair-env.eba-hnfscrcj.us-east-2.elasticbeanstalk.com/issue';
-
   const postData = async () => {
     setSubmitted(true);
     setBtnTxt('Loading...');
@@ -51,6 +50,10 @@ export default function Form() {
     // .catch((error) => console.log(error));
     setHasRes(true);
     setBtnTxt('Submit Another Ticket');
+    // clear id and stop fetching from URL params
+    setId('');
+    document.getElementById('standard-basic')?.removeAttribute('disabled');
+    document.getElementById('standard-basic')?.removeAttribute('style');
   };
 
   const newTicket = () => {
@@ -66,6 +69,17 @@ export default function Form() {
   const handlePriorityChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setPriority(event.target.value);
   };
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get('id');
+    if (id) {
+      setId(id as string);
+      // disable the id field
+      document.getElementById('standard-basic')?.setAttribute('disabled', 'true');
+      // gray out the id field
+      document.getElementById('standard-basic')?.setAttribute('style', 'background-color: #e0e0e0');
+    }
+  }, []);
 
   return (
     <>
