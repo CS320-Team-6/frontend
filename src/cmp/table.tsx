@@ -81,9 +81,37 @@ export default function MyTable(props: TableProps) {
     setPriority(event.target.value);
   };
 
+  const [sort, setSort] = useState('id');
+
+  const handleSortChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSort(event.target.value);
+    console.log(event.target.value);
+    // sort issues
+    issues.sort((a, b) => {
+      if (event.target.value === 'id') {
+        return a.id - b.id;
+      }
+      if (event.target.value === 'equipmentId') {
+        return a.equipmentId - b.equipmentId;
+      }
+      return 0;
+    });
+  }
+
   return (
     <Table>
       <TableHead>
+        <TableRow>
+          <TableCell>Sort By:</TableCell>
+          <TableCell><TextField select value={sort} onChange={handleSortChange}>
+            <MenuItem key="id" value="id">
+              Ticket ID
+            </MenuItem>
+            <MenuItem key="equipmentId" value="equipmentId">
+              Equipment ID
+            </MenuItem>
+          </TextField></TableCell>
+        </TableRow>
         <TableRow>
           <TableCell>Ticket ID</TableCell>
           <TableCell>Equipment ID</TableCell>
