@@ -4,7 +4,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableRow,
 } from '@mui/material';
 import priorities from './priorities.json';
-import statusies from './statusies.json';
+import statuses from './statuses.json';
 
 interface MyDate {
   year: number;
@@ -127,7 +127,7 @@ export default function MyTable(props: TableProps) {
                   <TableCell><TextField disabled value={equipmentId} /></TableCell>
                   <TableCell>
                     <TextField select value={status} onChange={handleStatusChange}>
-                      {statusies.map((option) => (
+                      {statuses.map((option) => (
                         <MenuItem key={option.value} value={option.value}>
                           {option.value}
                         </MenuItem>

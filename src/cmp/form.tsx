@@ -11,7 +11,7 @@ export default function Form() {
   const [date, setDate] = useState(new Date());
   const [priority, setPriority] = useState('LOW'); // LOW, MEDIUM, HIGH, URGENT
   const [submitted, setSubmitted] = useState(false);
-  const [successfullSub, setSuccessfullSub] = useState(false);
+  const [successfulSub, setSuccessfulSub] = useState(false);
   const [hasRes, setHasRes] = useState(false);
   const [btnTxt, setBtnTxt] = useState('Submit');
   const URL = 'http://urepair-env.eba-hnfscrcj.us-east-2.elasticbeanstalk.com/issue';
@@ -47,7 +47,7 @@ export default function Form() {
       body: JSON.stringify(ticket),
     };
     await fetch(URL, requestOptions)
-      .then((response) => setSuccessfullSub(response.ok));
+      .then((response) => setSuccessfulSub(response.ok));
     // .catch((error) => console.log(error));
     setHasRes(true);
     setBtnTxt('Submit Another Ticket');
@@ -55,7 +55,7 @@ export default function Form() {
 
   const newTicket = () => {
     setSubmitted(false);
-    setSuccessfullSub(false);
+    setSuccessfulSub(false);
     setHasRes(false);
     setBtnTxt('Submit');
   };
@@ -114,9 +114,9 @@ export default function Form() {
          hasRes
             && (
             <Alert
-              severity={successfullSub ? 'success' : 'error'}
+              severity={successfulSub ? 'success' : 'error'}
             >
-              {successfullSub ? 'Ticket Submitted' : 'Ticket Submission Failed'}
+              {successfulSub ? 'Ticket Submitted' : 'Ticket Submission Failed'}
             </Alert>
             )
 }
