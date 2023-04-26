@@ -5,11 +5,13 @@ import {
 } from '@mui/material';
 import '../styles/App.css';
 import priorities from './priorities.json';
+import problems from './problems.json';
 
 export default function Form() {
   const [Id, setId] = useState('');
   const [date, setDate] = useState(new Date());
   const [priority, setPriority] = useState('LOW'); // LOW, MEDIUM, HIGH, URGENT
+  const [problem, setProblem] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [successfulSub, setSuccessfulSub] = useState(false);
   const [hasRes, setHasRes] = useState(false);
@@ -31,7 +33,7 @@ export default function Form() {
         minute: date.getMinutes(),
       },
       priority,
-      description: null,
+      description: problem,
       assignedTo: null,
       dateResolved: null,
       resolutionDetails: null,
@@ -68,6 +70,9 @@ export default function Form() {
   };
   const handlePriorityChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setPriority(event.target.value);
+  };
+  const handleProblemChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setProblem(event.target.value);
   };
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -113,6 +118,19 @@ export default function Form() {
           {priorities.map((option) => (
             <MenuItem key={option.value} value={option.value}>
               {option.label}
+            </MenuItem>
+          ))}
+        </TextField>
+        <TextField
+          id="outlined-select-problem"
+          select
+          label="Whats wrong?"
+          defaultValue="Select an option."
+          onChange={handleProblemChange}
+        >
+          {problems.map((option) => (
+            <MenuItem key={option} value={option}>
+              {option}
             </MenuItem>
           ))}
         </TextField>
