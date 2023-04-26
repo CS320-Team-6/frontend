@@ -44,17 +44,16 @@ export default function Staff() {
       </h1> */
       }
       {
-            !hasData
-            && (
-            <Button
-              size="large"
-              variant="contained"
-              onClick={getData}
-            >
-              Fetch Tickets
-            </Button>
-            )
-}
+        !hasData && (
+          <Button
+            size="large"
+            variant="contained"
+            onClick={getData}
+          >
+            Fetch Tickets
+          </Button>
+        )
+      }
       {hasData && <EnhancedTable URL={URL} issues={data} getData={getData} />}
     </>
   );
