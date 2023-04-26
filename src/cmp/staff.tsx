@@ -25,7 +25,7 @@ interface Issue {
 export default function Staff() {
   const [data, setData] = useState(new Array<Issue>());
   const [hasData, setHasData] = useState(false);
-  const URL = 'http://urepair-env.eba-hnfscrcj.us-east-2.elasticbeanstalk.com/issue';
+  const URL = 'https://urepair.me/issue';
 
   const getData = async () => {
     const res = await fetch(URL);
