@@ -15,7 +15,7 @@ interface Issue {
     minute: number;
   };
   priority: string;
-  description: string | null;
+  description: string;
   assignedTo: string | null;
   dateResolved: string | null;
   resolutionDetails: string | null;

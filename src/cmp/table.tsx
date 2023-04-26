@@ -36,6 +36,7 @@ interface Issue {
   equipmentId: number;
   status: string;
   priority: string;
+  description: string;
   dateReported: MyDate;
 }
 
@@ -185,6 +186,12 @@ const headCells: readonly HeadCell[] = [
     numeric: false,
     disablePadding: false,
     label: 'Priority',
+  },
+  {
+    id: 'description',
+    numeric: false,
+    disablePadding: false,
+    label: 'Description',
   },
   {
     id: 'dateReported',
@@ -491,6 +498,7 @@ export default function EnhancedTable(props: TableProps) {
                       <TableCell align="right">{row.equipmentId}</TableCell>
                       <TableCell align="right">{row.status}</TableCell>
                       <TableCell align="right">{row.priority}</TableCell>
+                      <TableCell align="right">{row.description}</TableCell>
                       <TableCell align="right">{displayDate(row.dateReported)}</TableCell>
                     </TableRow>
                   );
