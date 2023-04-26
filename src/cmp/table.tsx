@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { alpha } from '@mui/material/styles';
 import Box from '@mui/material/Box';
 import Table from '@mui/material/Table';
@@ -41,40 +41,23 @@ interface Issue {
 
 interface TableProps {
   issues: Issue[];
-  URL: string;
-  getData: () => void;
 }
 
 const compareDate = (a: MyDate, b: MyDate) => {
-  if (a.year < b.year) {
-    return -1;
+  if (a.year !== b.year) {
+    return a.year - b.year;
   }
-  if (a.year > b.year) {
-    return 1;
+  if (a.month !== b.month) {
+    return a.month - b.month;
   }
-  if (a.month < b.month) {
-    return -1;
+  if (a.day !== b.day) {
+    return a.day - b.day;
   }
-  if (a.month > b.month) {
-    return 1;
+  if (a.hour !== b.hour) {
+    return a.hour - b.hour;
   }
-  if (a.day < b.day) {
-    return -1;
-  }
-  if (a.day > b.day) {
-    return 1;
-  }
-  if (a.hour < b.hour) {
-    return -1;
-  }
-  if (a.hour > b.hour) {
-    return 1;
-  }
-  if (a.minute < b.minute) {
-    return -1;
-  }
-  if (a.minute > b.minute) {
-    return 1;
+  if (a.minute !== b.minute) {
+    return a.minute - b.minute;
   }
   return 0;
 };
@@ -314,20 +297,18 @@ function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
 }
 
 export default function EnhancedTable(props: TableProps) {
-  const { issues, URL, getData } = props;
+  const { issues } = props;
   const rows = issues;
-  const [order, setOrder] = React.useState<Order>(DEFAULT_ORDER);
-  const [orderBy, setOrderBy] = React.useState<keyof Issue>(DEFAULT_ORDER_BY);
-  const [selected, setSelected] = React.useState<readonly string[]>([]);
-  const [page, setPage] = React.useState(0);
-  const [dense, setDense] = React.useState(false);
-  const [visibleRows, setVisibleRows] = React.useState<Issue[] | null>(null);
-  const [rowsPerPage, setRowsPerPage] = React.useState(DEFAULT_ROWS_PER_PAGE);
-  const [paddingHeight, setPaddingHeight] = React.useState(0);
+  const [order, setOrder] = useState<Order>(DEFAULT_ORDER);
+  const [orderBy, setOrderBy] = useState<keyof Issue>(DEFAULT_ORDER_BY);
+  const [selected, setSelected] = useState<readonly string[]>([]);
+  const [page, setPage] = useState(0);
+  const [dense, setDense] = useState(false);
+  const [visibleRows, setVisibleRows] = useState<Issue[] | null>(null);
+  const [rowsPerPage, setRowsPerPage] = useState(DEFAULT_ROWS_PER_PAGE);
+  const [paddingHeight, setPaddingHeight] = useState(0);
 
-  console.log(URL, getData);
-
-  React.useEffect(() => {
+  useEffect(() => {
     let rowsOnMount = stableSort(
       rows,
       getComparator(DEFAULT_ORDER, DEFAULT_ORDER_BY),
@@ -340,7 +321,7 @@ export default function EnhancedTable(props: TableProps) {
     setVisibleRows(rowsOnMount);
   }, []);
 
-  const handleRequestSort = React.useCallback(
+  const handleRequestSort = useCallback(
     (event: React.MouseEvent<unknown>, newOrderBy: keyof Issue) => {
       const isAsc = orderBy === newOrderBy && order === 'asc';
       const toggledOrder = isAsc ? 'desc' : 'asc';
@@ -387,7 +368,7 @@ export default function EnhancedTable(props: TableProps) {
     setSelected(newSelected);
   };
 
-  const handleChangePage = React.useCallback(
+  const handleChangePage = useCallback(
     (event: unknown, newPage: number) => {
       setPage(newPage);
 
@@ -407,7 +388,7 @@ export default function EnhancedTable(props: TableProps) {
     [order, orderBy, dense, rowsPerPage],
   );
 
-  const handleChangeRowsPerPage = React.useCallback(
+  const handleChangeRowsPerPage = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       const updatedRowsPerPage = parseInt(event.target.value, 10);
       setRowsPerPage(updatedRowsPerPage);
