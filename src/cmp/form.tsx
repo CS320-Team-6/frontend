@@ -111,15 +111,14 @@ export default function Form() {
         {btnTxt}
       </Button>
       {
-         hasRes
-            && (
-            <Alert
-              severity={successfulSub ? 'success' : 'error'}
-            >
-              {successfulSub ? 'Ticket Submitted' : 'Ticket Submission Failed'}
-            </Alert>
-            )
-}
+        hasRes && (
+          <Alert
+            severity={successfulSub ? 'success' : 'error'}
+          >
+            {successfulSub ? 'Ticket Submitted' : 'Ticket Submission Failed'}
+          </Alert>
+        )
+      }
     </>
   );
 }
