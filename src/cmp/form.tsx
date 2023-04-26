@@ -14,7 +14,7 @@ export default function Form() {
   const [successfullSub, setSuccessfullSub] = useState(false);
   const [hasRes, setHasRes] = useState(false);
   const [btnTxt, setBtnTxt] = useState('Submit');
-  const URL = 'http://urepair-env.eba-hnfscrcj.us-east-2.elasticbeanstalk.com/issue';
+  const URL = 'https://urepair.me/issue';
   const postData = async () => {
     setSubmitted(true);
     setBtnTxt('Loading...');

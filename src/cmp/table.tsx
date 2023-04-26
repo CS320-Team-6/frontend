@@ -298,7 +298,7 @@ function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
       )}
       {numSelected > 0 ? (
         <Tooltip title="Delete">
-          <IconButton onClick={() => console.log('click')}>
+          <IconButton>
             <DeleteIcon />
           </IconButton>
         </Tooltip>
