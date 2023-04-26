@@ -1,7 +1,12 @@
 import React, { useEffect, useState } from 'react';
 
 import {
-  TextField, MenuItem, Box, Button, Alert,
+  TextField,
+  MenuItem,
+  Box,
+  Button,
+  Alert,
+  Autocomplete,
 } from '@mui/material';
 import '../styles/App.css';
 import priorities from './priorities.json';
@@ -71,8 +76,10 @@ export default function Form() {
   const handlePriorityChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setPriority(event.target.value);
   };
-  const handleProblemChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setProblem(event.target.value);
+  const handleProblemChange = (event: React.SyntheticEvent, value: string | null) => {
+    if (value) {
+      setProblem(value);
+    }
   };
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -121,19 +128,19 @@ export default function Form() {
             </MenuItem>
           ))}
         </TextField>
-        <TextField
+        <Autocomplete
           id="outlined-select-problem"
-          select
-          label="Whats wrong?"
-          defaultValue="Select an option."
+          freeSolo
+          options={problems}
           onChange={handleProblemChange}
-        >
-          {problems.map((option) => (
-            <MenuItem key={option} value={option}>
-              {option}
-            </MenuItem>
-          ))}
-        </TextField>
+          renderInput={(params) => (
+            <TextField
+              // eslint-disable-next-line react/jsx-props-no-spreading
+              {...params}
+              label="Whats wrong?"
+            />
+          )}
+        />
       </Box>
       <Button
         variant="contained"
