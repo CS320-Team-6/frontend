@@ -38,21 +38,22 @@ export default function Staff() {
 
   return (
     <>
-      {/* <h1 className={styles.title}>
-            Staff
-         </h1> */}
+      {/*
+      <h1 className={styles.title}>
+        Staff
+      </h1> */
+      }
       {
-            !hasData
-            && (
-            <Button
-              size="large"
-              variant="contained"
-              onClick={getData}
-            >
-              Fetch Tickets
-            </Button>
-            )
-}
+        !hasData && (
+          <Button
+            size="large"
+            variant="contained"
+            onClick={getData}
+          >
+            Fetch Tickets
+          </Button>
+        )
+      }
       {hasData && <EnhancedTable URL={URL} issues={data} getData={getData} />}
     </>
   );
