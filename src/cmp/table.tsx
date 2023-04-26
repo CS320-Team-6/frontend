@@ -320,7 +320,7 @@ export default function EnhancedTable(props: TableProps) {
   const [orderBy, setOrderBy] = React.useState<keyof Issue>(DEFAULT_ORDER_BY);
   const [selected, setSelected] = React.useState<readonly string[]>([]);
   const [page, setPage] = React.useState(0);
-  const [dense, setDense] = React.useState(false);
+  const [dense, setDense] = React.useState(true);
   const [visibleRows, setVisibleRows] = React.useState<Issue[] | null>(null);
   const [rowsPerPage, setRowsPerPage] = React.useState(DEFAULT_ROWS_PER_PAGE);
   const [paddingHeight, setPaddingHeight] = React.useState(0);
