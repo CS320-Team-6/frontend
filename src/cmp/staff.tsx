@@ -33,7 +33,6 @@ export default function Staff() {
     resJSON.issue_table.sort((a: Issue, b: Issue) => a.id - b.id);
     setData(resJSON.issue_table);
     setHasData(true);
-    console.log(data);
   };
 
   return (
