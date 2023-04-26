@@ -6,8 +6,8 @@ import {
   Box,
   Button,
   Alert,
-  Autocomplete,
 } from '@mui/material';
+import Autocomplete from '@mui/material/Autocomplete';
 import '../styles/App.css';
 import priorities from './priorities.json';
 import problems from './problems.json';
@@ -132,7 +132,7 @@ export default function Form() {
           id="outlined-select-problem"
           freeSolo
           options={problems}
-          onChange={handleProblemChange}
+          onInputChange={handleProblemChange}
           renderInput={(params) => (
             <TextField
               // eslint-disable-next-line react/jsx-props-no-spreading
