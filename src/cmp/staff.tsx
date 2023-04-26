@@ -1,7 +1,7 @@
 // import styles from '@/styles/Home.module.css';
 import React, { useState } from 'react';
 import { Button } from '@mui/material';
-import MyTable from './table';
+import EnhancedTable from './table';
 
 interface Issue {
   id: number;
@@ -33,6 +33,7 @@ export default function Staff() {
     resJSON.issue_table.sort((a: Issue, b: Issue) => a.id - b.id);
     setData(resJSON.issue_table);
     setHasData(true);
+    console.log(data);
   };
 
   return (
@@ -43,19 +44,18 @@ export default function Staff() {
       </h1> */
       }
       {
-        !hasData && (
-          <Button
-            size="large"
-            variant="contained"
-            onClick={getData}
-          >
-            Fetch Tickets
-          </Button>
-        )
-      }
-      {
-        hasData && <MyTable URL={URL} issues={data} getData={getData} />
-      }
+            !hasData
+            && (
+            <Button
+              size="large"
+              variant="contained"
+              onClick={getData}
+            >
+              Fetch Tickets
+            </Button>
+            )
+}
+      {hasData && <EnhancedTable URL={URL} issues={data} getData={getData} />}
     </>
   );
 }
