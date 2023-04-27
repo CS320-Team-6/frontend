@@ -36,6 +36,7 @@ interface Issue {
   equipmentId: number;
   status: string;
   priority: string;
+  description: string;
   dateReported: MyDate;
 }
 
@@ -187,6 +188,12 @@ const headCells: readonly HeadCell[] = [
     label: 'Priority',
   },
   {
+    id: 'description',
+    numeric: false,
+    disablePadding: false,
+    label: 'Description',
+  },
+  {
     id: 'dateReported',
     numeric: false,
     disablePadding: false,
@@ -320,7 +327,7 @@ export default function EnhancedTable(props: TableProps) {
   const [orderBy, setOrderBy] = React.useState<keyof Issue>(DEFAULT_ORDER_BY);
   const [selected, setSelected] = React.useState<readonly string[]>([]);
   const [page, setPage] = React.useState(0);
-  const [dense, setDense] = React.useState(false);
+  const [dense, setDense] = React.useState(true);
   const [visibleRows, setVisibleRows] = React.useState<Issue[] | null>(null);
   const [rowsPerPage, setRowsPerPage] = React.useState(DEFAULT_ROWS_PER_PAGE);
   const [paddingHeight, setPaddingHeight] = React.useState(0);
@@ -491,6 +498,7 @@ export default function EnhancedTable(props: TableProps) {
                       <TableCell align="right">{row.equipmentId}</TableCell>
                       <TableCell align="right">{row.status}</TableCell>
                       <TableCell align="right">{row.priority}</TableCell>
+                      <TableCell align="right">{row.description}</TableCell>
                       <TableCell align="right">{displayDate(row.dateReported)}</TableCell>
                     </TableRow>
                   );
