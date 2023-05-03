@@ -51,7 +51,7 @@ export default function SignIn() {
       if (response.ok) {
         const result = await response.text();
         console.log(result); // You can handle the successful login response here
-        setIsAuthenticated(true);
+        setIsAuthenticated(true); // This should in therory render the staff page
       } else {
         console.error('Invalid credentials');
       }
