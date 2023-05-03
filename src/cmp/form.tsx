@@ -96,7 +96,14 @@ export default function Form() {
   return (
     <>
       <h1 className="title">
-        Welcome to URepair!
+        <style>
+          {
+            `.logo-img {
+                margin-top: 6rem;
+            }`
+          }
+        </style>
+        <img src="https://cdn.discordapp.com/attachments/702265921288536099/1103155461890527262/logo.png" width="300" alt="logo" className="logo-img" />
       </h1>
       <Box
         component="form"
