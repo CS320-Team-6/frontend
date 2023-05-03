@@ -47,6 +47,7 @@ export default function SignIn() {
           'Content-Type': 'application/json',
           Authorization: `Basic ${base64Credentials}`,
         },
+        credentials: 'include',
       });
 
       if (response.ok) {
