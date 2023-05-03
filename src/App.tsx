@@ -3,7 +3,7 @@ import { Button } from '@mui/material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import './styles/App.css';
 import Form from './cmp/form';
-import Staff from './cmp/staff';
+import SignIn from './cmp/signin';
 
 const theme = createTheme({
   palette: {
@@ -39,7 +39,7 @@ function App() {
               Login
             </Button>
           </div>
-          {isStaff ? <Staff /> : <Form />}
+          {isStaff ? <SignIn /> : <Form />}
         </main>
       </ThemeProvider>
     </>
