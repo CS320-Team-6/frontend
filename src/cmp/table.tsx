@@ -433,6 +433,7 @@ export default function EnhancedTable(props: TableProps) {
 
   const isSelected = (name: string) => selected.indexOf(name) !== -1;
 
+  // Resolves the selected issues
   async function resolveIssues(selected_issues: any[]) {
     /* eslint-disable no-await-in-loop */
     /* eslint-disable no-restricted-syntax */
