@@ -1,17 +1,24 @@
 import React, { useEffect, useState } from 'react';
 
 import {
-  TextField, MenuItem, Box, Button, Alert,
+  TextField,
+  MenuItem,
+  Box,
+  Button,
+  Alert,
 } from '@mui/material';
+import Autocomplete from '@mui/material/Autocomplete';
 import '../styles/App.css';
 import priorities from './priorities.json';
+import problems from './problems.json';
 
 export default function Form() {
   const [Id, setId] = useState('');
   const [date, setDate] = useState(new Date());
   const [priority, setPriority] = useState('LOW'); // LOW, MEDIUM, HIGH, URGENT
+  const [problem, setProblem] = useState('');
   const [submitted, setSubmitted] = useState(false);
-  const [successfullSub, setSuccessfullSub] = useState(false);
+  const [successfulSub, setSuccessfulSub] = useState(false);
   const [hasRes, setHasRes] = useState(false);
   const [btnTxt, setBtnTxt] = useState('Submit');
   const URL = 'https://urepair.me/issue';
@@ -31,7 +38,7 @@ export default function Form() {
         minute: date.getMinutes(),
       },
       priority,
-      description: null,
+      description: problem,
       assignedTo: null,
       dateResolved: null,
       resolutionDetails: null,
@@ -46,7 +53,7 @@ export default function Form() {
       body: JSON.stringify(ticket),
     };
     await fetch(URL, requestOptions)
-      .then((response) => setSuccessfullSub(response.ok));
+      .then((response) => setSuccessfulSub(response.ok));
     // .catch((error) => console.log(error));
     setHasRes(true);
     setBtnTxt('Submit Another Ticket');
@@ -58,7 +65,7 @@ export default function Form() {
 
   const newTicket = () => {
     setSubmitted(false);
-    setSuccessfullSub(false);
+    setSuccessfulSub(false);
     setHasRes(false);
     setBtnTxt('Submit');
   };
@@ -68,6 +75,11 @@ export default function Form() {
   };
   const handlePriorityChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setPriority(event.target.value);
+  };
+  const handleProblemChange = (event: React.SyntheticEvent, value: string | null) => {
+    if (value) {
+      setProblem(value);
+    }
   };
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -116,6 +128,19 @@ export default function Form() {
             </MenuItem>
           ))}
         </TextField>
+        <Autocomplete
+          id="outlined-select-problem"
+          freeSolo
+          options={problems}
+          onInputChange={handleProblemChange}
+          renderInput={(params) => (
+            <TextField
+              // eslint-disable-next-line react/jsx-props-no-spreading
+              {...params}
+              label="Whats wrong?"
+            />
+          )}
+        />
       </Box>
       <Button
         variant="contained"
@@ -125,15 +150,14 @@ export default function Form() {
         {btnTxt}
       </Button>
       {
-         hasRes
-            && (
-            <Alert
-              severity={successfullSub ? 'success' : 'error'}
-            >
-              {successfullSub ? 'Ticket Submitted' : 'Ticket Submission Failed'}
-            </Alert>
-            )
-}
+        hasRes && (
+          <Alert
+            severity={successfulSub ? 'success' : 'error'}
+          >
+            {successfulSub ? 'Ticket Submitted' : 'Ticket Submission Failed'}
+          </Alert>
+        )
+      }
     </>
   );
 }
