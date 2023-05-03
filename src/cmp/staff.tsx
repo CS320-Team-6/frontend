@@ -56,6 +56,7 @@ export default function Staff() {
     resJSON.issue_table.sort((a: Issue, b: Issue) => a.id - b.id);
     setData(resJSON.issue_table);
     setHasData(true);
+    return Promise.resolve(resJSON.issue_table);
   };
 
   const getEquipment = async () => {
@@ -72,29 +73,29 @@ export default function Staff() {
       <h1 className={styles.title}>
         Staff
       </h1> */
-      }
+        }
       {
-        !hasData && (
-          <Button
-            size="large"
-            variant="contained"
-            onClick={getData}
-          >
-            Fetch Tickets
-          </Button>
-        )
-      }
+            !hasData && (
+            <Button
+              size="large"
+              variant="contained"
+              onClick={getData}
+            >
+              Fetch Tickets
+            </Button>
+            )
+        }
       {
-        !hasEquipment && (
-          <Button
-            size="large"
-            variant="contained"
-            onClick={getEquipment}
-          >
-            Fetch Equipment
-          </Button>
-        )
-      }
+            !hasEquipment && (
+            <Button
+              size="large"
+              variant="contained"
+              onClick={getEquipment}
+            >
+              Fetch Equipment
+            </Button>
+            )
+        }
       {hasData && <EnhancedTable URL={ISSUE_URL} issues={data} getData={getData} />}
       {hasEquipment && JSON.stringify(equipment)}
     </>
