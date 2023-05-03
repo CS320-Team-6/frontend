@@ -17,9 +17,10 @@ import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Switch from '@mui/material/Switch';
-import DeleteIcon from '@mui/icons-material/Delete';
+import CheckIcon from '@mui/icons-material/Check';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import { visuallyHidden } from '@mui/utils';
+import { MouseEvent } from 'react';
 
 interface MyDate {
   year: number;
@@ -42,7 +43,7 @@ interface Issue {
 interface TableProps {
   issues: Issue[];
   URL: string;
-  getData: () => void;
+  getData: () => Promise<void>;
 }
 
 const compareDate = (a: MyDate, b: MyDate) => {
@@ -257,10 +258,11 @@ function EnhancedTableHead(props: EnhancedTableProps) {
 
 interface EnhancedTableToolbarProps {
   numSelected: number;
+  handleBatchDelete: () => void;
 }
 
 function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
-  const { numSelected } = props;
+  const { numSelected, handleBatchDelete } = props;
 
   return (
     <Toolbar
@@ -297,9 +299,9 @@ function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
         </Typography>
       )}
       {numSelected > 0 ? (
-        <Tooltip title="Delete">
-          <IconButton>
-            <DeleteIcon />
+        <Tooltip title="Resolve">
+          <IconButton onClick={handleBatchDelete}>
+            <CheckIcon />
           </IconButton>
         </Tooltip>
       ) : (
@@ -315,7 +317,7 @@ function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
 
 export default function EnhancedTable(props: TableProps) {
   const { issues, URL, getData } = props;
-  const rows = issues;
+  const [rows, setRows] = React.useState<Issue[]>(issues);
   const [order, setOrder] = React.useState<Order>(DEFAULT_ORDER);
   const [orderBy, setOrderBy] = React.useState<keyof Issue>(DEFAULT_ORDER_BY);
   const [selected, setSelected] = React.useState<readonly string[]>([]);
@@ -324,8 +326,6 @@ export default function EnhancedTable(props: TableProps) {
   const [visibleRows, setVisibleRows] = React.useState<Issue[] | null>(null);
   const [rowsPerPage, setRowsPerPage] = React.useState(DEFAULT_ROWS_PER_PAGE);
   const [paddingHeight, setPaddingHeight] = React.useState(0);
-
-  console.log(URL, getData);
 
   React.useEffect(() => {
     let rowsOnMount = stableSort(
@@ -433,10 +433,52 @@ export default function EnhancedTable(props: TableProps) {
 
   const isSelected = (name: string) => selected.indexOf(name) !== -1;
 
+  async function resolveIssues(selected_issues: any[]) {
+    /* eslint-disable no-await-in-loop */
+    /* eslint-disable no-restricted-syntax */
+    for (const issue of selected_issues) {
+      const resFetch = await fetch(`${URL}/${issue}`);
+      const resFetchJSON = await resFetch.json();
+      resFetchJSON.status = 'RESOLVED';
+      const requestOptions = {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(resFetchJSON),
+      };
+      await fetch(`${URL}/${issue}`, requestOptions);
+    }
+  }
+
+  // Add this function inside the EnhancedTable component
+  const handleBatchDelete = async () => {
+    // @ts-ignore
+    await resolveIssues(selected); // Add await keyword here
+    // Call getData to refresh the data in the parent component
+    const data = await getData();
+
+    setSelected([]);
+    // update the rows in the table
+    // @ts-ignore
+    setRows(data);
+  };
+
+  // refresh table when visible rows change
+  React.useEffect(() => {
+    const sortedRows = stableSort(rows, getComparator(order, orderBy));
+    const updatedRows = sortedRows.slice(
+      page * rowsPerPage,
+      page * rowsPerPage + rowsPerPage,
+    );
+    setVisibleRows(updatedRows);
+  }, [rows]);
+
   return (
     <Box sx={{ width: '100%' }}>
       <Paper sx={{ width: '100%', mb: 2 }}>
-        <EnhancedTableToolbar numSelected={selected.length} />
+        <EnhancedTableToolbar numSelected={selected.length} handleBatchDelete={handleBatchDelete} />
         <TableContainer>
           <Table
             sx={{ minWidth: 750 }}

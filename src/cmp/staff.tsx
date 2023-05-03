@@ -25,7 +25,7 @@ interface Issue {
 export default function Staff() {
   const [data, setData] = useState(new Array<Issue>());
   const [hasData, setHasData] = useState(false);
-  const URL = 'http://urepair-env.eba-hnfscrcj.us-east-2.elasticbeanstalk.com/issue';
+  const URL = 'https://urepair.me/issue';
 
   const getData = async () => {
     const res = await fetch(URL);
@@ -33,7 +33,11 @@ export default function Staff() {
     resJSON.issue_table.sort((a: Issue, b: Issue) => a.id - b.id);
     setData(resJSON.issue_table);
     setHasData(true);
-    console.log(data);
+    // console.log(resJSON.issue_table);
+    // return a void promise
+
+    // return a promise with the updated data
+    return Promise.resolve(resJSON.issue_table);
   };
 
   return (
