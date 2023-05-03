@@ -85,6 +85,7 @@ export default function Staff() {
             </Button>
             )
         }
+      {hasData && <EnhancedTable URL={ISSUE_URL} issues={data} getData={getData} />}
       {
             !hasEquipment && (
             <Button
@@ -96,7 +97,6 @@ export default function Staff() {
             </Button>
             )
         }
-      {hasData && <EnhancedTable URL={ISSUE_URL} issues={data} getData={getData} />}
       {hasEquipment && JSON.stringify(equipment)}
     </>
   );
