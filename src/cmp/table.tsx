@@ -603,14 +603,12 @@ export default function EnhancedTable(props: TableProps) {
     };
     await fetch(URL, requestOptions);
     // delete the old issues
-    /*
     await Promise.all(selected.map(async (issue) => {
         const requestOptionsDelete = {
             method: 'DELETE',
         };
         await fetch(`${URL}/${issue}`, requestOptionsDelete);
     }));
-    */
     const data = await getData();
 
     setSelected([]);
