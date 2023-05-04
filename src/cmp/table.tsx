@@ -18,7 +18,9 @@ import Tooltip from '@mui/material/Tooltip';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Switch from '@mui/material/Switch';
 import CheckIcon from '@mui/icons-material/Check';
+import MergeIcon from '@mui/icons-material/Merge';
 import FilterListIcon from '@mui/icons-material/FilterList';
+import DeleteIcon from '@mui/icons-material/Delete';
 import { visuallyHidden } from '@mui/utils';
 import { MouseEvent } from 'react';
 
@@ -30,7 +32,12 @@ interface MyDate {
   minute: number;
 }
 
-const displayDate = (date: MyDate) => `${date.month}/${date.day}/${date.year}`;
+const displayDate = (date: MyDate) => {
+  if (date === null) {
+    return '';
+  }
+  return `${date.month}/${date.day}/${date.year}`;
+};
 
 interface Issue {
   id: number;
@@ -39,6 +46,7 @@ interface Issue {
   priority: string;
   description: string;
   dateReported: MyDate;
+  dateResolved: MyDate;
 }
 
 interface TableProps {
@@ -48,6 +56,17 @@ interface TableProps {
 }
 
 const compareDate = (a: MyDate, b: MyDate) => {
+  // if both dates are null, they are equal
+  if (a === null && b === null) {
+    return 0;
+  }
+  // if one date is null, the other is greater
+  if (a === null) {
+    return -1;
+  }
+  if (b === null) {
+    return 1;
+  }
   if (a.year < b.year) {
     return -1;
   }
@@ -112,7 +131,7 @@ function descendingComparator<T>(a: T, b: T, orderBy: keyof T) {
     }
   }
   // if orderBy "dateReported" order by date
-  if (orderBy === 'dateReported') {
+  if (orderBy === 'dateReported' || orderBy === 'dateResolved') {
     // @ts-ignore
     if (compareDate(b[orderBy], a[orderBy]) < 0) {
       return -1;
@@ -200,10 +219,16 @@ const headCells: readonly HeadCell[] = [
     disablePadding: false,
     label: 'Date Reported',
   },
+  {
+    id: 'dateResolved',
+    numeric: false,
+    disablePadding: false,
+    label: 'Date Resolved',
+  },
 ];
 
-const DEFAULT_ORDER = 'asc';
-const DEFAULT_ORDER_BY = 'id';
+const DEFAULT_ORDER = 'desc';
+const DEFAULT_ORDER_BY = 'dateReported';
 const DEFAULT_ROWS_PER_PAGE = 10;
 
 interface EnhancedTableProps {
@@ -246,7 +271,7 @@ function EnhancedTableHead(props: EnhancedTableProps) {
           >
             <TableSortLabel
               active={orderBy === headCell.id}
-              direction={orderBy === headCell.id ? order : 'asc'}
+              direction={orderBy === headCell.id ? order : 'desc'}
               onClick={createSortHandler(headCell.id)}
             >
               {headCell.label}
@@ -266,10 +291,14 @@ function EnhancedTableHead(props: EnhancedTableProps) {
 interface EnhancedTableToolbarProps {
   numSelected: number;
   handleBatchDelete: () => void;
+  handleMerge: () => void;
+  handleDelete: () => void;
 }
 
 function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
-  const { numSelected, handleBatchDelete } = props;
+  const {
+    numSelected, handleBatchDelete, handleMerge, handleDelete,
+  } = props;
 
   return (
     <Toolbar
@@ -306,11 +335,23 @@ function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
         </Typography>
       )}
       {numSelected > 0 ? (
-        <Tooltip title="Resolve">
-          <IconButton onClick={handleBatchDelete}>
-            <CheckIcon />
-          </IconButton>
-        </Tooltip>
+        <>
+          <Tooltip title="Delete">
+            <IconButton onClick={handleDelete}>
+              <DeleteIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Merge">
+            <IconButton onClick={handleMerge}>
+              <MergeIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Resolve">
+            <IconButton onClick={handleBatchDelete}>
+              <CheckIcon />
+            </IconButton>
+          </Tooltip>
+        </>
       ) : (
         <Tooltip title="Filter list">
           <IconButton>
@@ -350,11 +391,20 @@ export default function EnhancedTable(props: TableProps) {
   const handleRequestSort = React.useCallback(
     (event: React.MouseEvent<unknown>, newOrderBy: keyof Issue) => {
       const isAsc = orderBy === newOrderBy && order === 'asc';
-      const toggledOrder = isAsc ? 'desc' : 'asc';
+      /* eslint-disable no-nested-ternary */
+      const toggledOrder = orderBy !== newOrderBy ? 'desc' : isAsc ? 'desc' : 'asc';
       setOrder(toggledOrder);
       setOrderBy(newOrderBy);
 
       const sortedRows = stableSort(rows, getComparator(toggledOrder, newOrderBy));
+      const newLastPage = Math.ceil(sortedRows.length / rowsPerPage) - 1;
+
+      if (page === newLastPage) {
+        setPage(newLastPage);
+      } else {
+        setPage(0);
+      }
+
       const updatedRows = sortedRows.slice(
         page * rowsPerPage,
         page * rowsPerPage + rowsPerPage,
@@ -448,6 +498,14 @@ export default function EnhancedTable(props: TableProps) {
       const resFetch = await fetch(`${URL}/${issue}`);
       const resFetchJSON = await resFetch.json();
       resFetchJSON.status = 'RESOLVED';
+      const date = new Date();
+      resFetchJSON.dateResolved = {
+        year: date.getFullYear(),
+        month: date.getMonth() + 1, // add 1 because getMonth() returns 0-based index
+        day: date.getDate(),
+        hour: date.getHours(),
+        minute: date.getMinutes(),
+      };
       const requestOptions = {
         method: 'POST',
         headers: {
@@ -473,6 +531,94 @@ export default function EnhancedTable(props: TableProps) {
     setRows(data);
   };
 
+  const handleDelete = async () => {
+    // delete selected issues
+    await Promise.all(selected.map(async (issue) => {
+      const requestOptions = {
+        method: 'DELETE',
+      };
+      await fetch(`${URL}/${issue}`, requestOptions);
+    }));
+    // Call getData to refresh the data in the parent component
+    const data = await getData();
+    setSelected([]);
+    // update the rows in the table
+    // @ts-ignore
+    setRows(data);
+  };
+
+  const handleMerge = async () => {
+    // check that there are at least 2 issues selected
+    if (selected.length < 2) {
+      alert('Please select at least 2 issues to merge.');
+      return;
+    }
+    // check that all selected issues have the same equipmentID
+    const selectedIssues = await Promise.all(selected.map(async (issue) => {
+      const resFetch = await fetch(`${URL}/${issue}`);
+      const resFetchJSON = await resFetch.json();
+      return resFetchJSON;
+    }));
+    const equipmentIDs = selectedIssues.map((issue) => issue.equipmentId);
+    // @ts-ignore
+    const uniqueEquipmentIDs = [...new Set(equipmentIDs)];
+    console.log(uniqueEquipmentIDs);
+    if (uniqueEquipmentIDs.length > 1) {
+      alert('Please select issues with the same equipmentID to merge.');
+      return;
+    }
+    // create a new issue with the same equipmentID
+    const priorityOrder = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'];
+    const priorities = selectedIssues.map((issue) => issue.priority);
+    /* eslint-disable-next-line max-len */
+    const maxPriority = priorities.reduce((a, b) => (priorityOrder.indexOf(a) > priorityOrder.indexOf(b) ? a : b));
+    const mergedDescription = selectedIssues.map((issue) => issue.description).join('\n');
+    const date = new Date();
+    const newIssue = {
+      id: 1,
+      equipmentId: uniqueEquipmentIDs[0],
+      status: 'NEW',
+      dateReported: {
+        year: date.getFullYear(),
+        month: date.getMonth() + 1, // add 1 because getMonth() returns 0-based index
+        day: date.getDate(),
+        hour: date.getHours(),
+        minute: date.getMinutes(),
+      },
+      priority: maxPriority,
+      description: mergedDescription,
+      assignedTo: null,
+      dateResolved: null,
+      resolutionDetails: null,
+      notes: null,
+    };
+    // create the new issue
+    const requestOptions = {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(newIssue),
+    };
+    await fetch(URL, requestOptions);
+    // delete the old issues
+    /*
+    await Promise.all(selected.map(async (issue) => {
+        const requestOptionsDelete = {
+            method: 'DELETE',
+        };
+        await fetch(`${URL}/${issue}`, requestOptionsDelete);
+    }));
+    */
+    const data = await getData();
+
+    setSelected([]);
+    // update the rows in the table
+    // @ts-ignore
+    setRows(data);
+  };
+
   // refresh table when visible rows change
   React.useEffect(() => {
     const sortedRows = stableSort(rows, getComparator(order, orderBy));
@@ -483,10 +629,11 @@ export default function EnhancedTable(props: TableProps) {
     setVisibleRows(updatedRows);
   }, [rows]);
 
+  /* eslint-disable max-len */
   return (
     <Box sx={{ width: '100%' }}>
       <Paper sx={{ width: '100%', mb: 2 }}>
-        <EnhancedTableToolbar numSelected={selected.length} handleBatchDelete={handleBatchDelete} />
+        <EnhancedTableToolbar numSelected={selected.length} handleBatchDelete={handleBatchDelete} handleMerge={handleMerge} handleDelete={handleDelete} />
         <TableContainer>
           <Table
             sx={{ minWidth: 750 }}
@@ -543,6 +690,7 @@ export default function EnhancedTable(props: TableProps) {
                       <TableCell align="right">{row.priority}</TableCell>
                       <TableCell align="right">{row.description}</TableCell>
                       <TableCell align="right">{displayDate(row.dateReported)}</TableCell>
+                      <TableCell align="right">{displayDate(row.dateResolved)}</TableCell>
                     </TableRow>
                   );
                 })
