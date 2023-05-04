@@ -17,7 +17,13 @@ interface Issue {
   priority: string;
   description: string;
   assignedTo: string | null;
-  dateResolved: string | null;
+  dateResolved: {
+    year: number;
+    month: number;
+    day: number;
+    hour: number;
+    minute: number;
+  };
   resolutionDetails: string | null;
   notes: string | null;
 }
@@ -53,7 +59,6 @@ export default function Staff() {
   const getData = async () => {
     const res = await fetch(ISSUE_URL);
     const resJSON = await res.json();
-    resJSON.issue_table.sort((a: Issue, b: Issue) => a.id - b.id);
     setData(resJSON.issue_table);
     setHasData(true);
     return Promise.resolve(resJSON.issue_table);
