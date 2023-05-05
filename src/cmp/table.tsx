@@ -334,21 +334,23 @@ function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
           Issues
         </Typography>
       )}
+      {numSelected > 1 ? (
+        <Tooltip title="Merge">
+          <IconButton onClick={handleMerge}>
+            <MergeIcon />
+          </IconButton>
+        </Tooltip>
+      ) : null}
       {numSelected > 0 ? (
         <>
-          <Tooltip title="Delete">
-            <IconButton onClick={handleDelete}>
-              <DeleteIcon />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Merge">
-            <IconButton onClick={handleMerge}>
-              <MergeIcon />
-            </IconButton>
-          </Tooltip>
           <Tooltip title="Resolve">
             <IconButton onClick={handleBatchDelete}>
               <CheckIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Delete">
+            <IconButton onClick={handleDelete}>
+              <DeleteIcon />
             </IconButton>
           </Tooltip>
         </>
@@ -536,7 +538,9 @@ export default function EnhancedTable(props: TableProps) {
     await Promise.all(selected.map(async (issue) => {
       const requestOptions = {
         method: 'DELETE',
+        credentials: 'include',
       };
+      // @ts-ignore
       await fetch(`${URL}/${issue}`, requestOptions);
     }));
     // Call getData to refresh the data in the parent component
@@ -606,7 +610,9 @@ export default function EnhancedTable(props: TableProps) {
     await Promise.all(selected.map(async (issue) => {
       const requestOptionsDelete = {
         method: 'DELETE',
+        credentials: 'include',
       };
+      // @ts-ignore
       await fetch(`${URL}/${issue}`, requestOptionsDelete);
     }));
     const data = await getData();
