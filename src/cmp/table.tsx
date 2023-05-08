@@ -22,6 +22,12 @@ import MergeIcon from '@mui/icons-material/Merge';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { visuallyHidden } from '@mui/utils';
+import Button from '@mui/material/Button';
+import TextField from '@mui/material/TextField';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogTitle from '@mui/material/DialogTitle';
 import { MouseEvent } from 'react';
 
 interface MyDate {
@@ -47,6 +53,7 @@ interface Issue {
   description: string;
   dateReported: MyDate;
   dateResolved: MyDate;
+  resolutionDetails: string | null;
 }
 
 interface TableProps {
@@ -151,8 +158,8 @@ function getComparator<Key extends keyof any>(
   order: Order,
   orderBy: Key,
 ): (
-    a: { [key in Key]: number | string | MyDate },
-    b: { [key in Key]: number | string | MyDate },
+    a: { [key in Key]: number | string | MyDate | null },
+    b: { [key in Key]: number | string | MyDate | null },
   ) => number {
   return order === 'desc'
     ? (a, b) => descendingComparator(a, b, orderBy)
@@ -225,6 +232,12 @@ const headCells: readonly HeadCell[] = [
     disablePadding: false,
     label: 'Date Resolved',
   },
+  {
+    id: 'resolutionDetails',
+    numeric: false,
+    disablePadding: false,
+    label: 'Resolution Details',
+  },
 ];
 
 const DEFAULT_ORDER = 'desc';
@@ -290,14 +303,14 @@ function EnhancedTableHead(props: EnhancedTableProps) {
 
 interface EnhancedTableToolbarProps {
   numSelected: number;
-  handleBatchDelete: () => void;
+  handleResolve: () => void;
   handleMerge: () => void;
   handleDelete: () => void;
 }
 
 function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
   const {
-    numSelected, handleBatchDelete, handleMerge, handleDelete,
+    numSelected, handleResolve, handleMerge, handleDelete,
   } = props;
 
   return (
@@ -344,7 +357,7 @@ function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
       {numSelected > 0 ? (
         <>
           <Tooltip title="Resolve">
-            <IconButton onClick={handleBatchDelete}>
+            <IconButton onClick={handleResolve}>
               <CheckIcon />
             </IconButton>
           </Tooltip>
@@ -376,6 +389,8 @@ export default function EnhancedTable(props: TableProps) {
   const [visibleRows, setVisibleRows] = React.useState<Issue[] | null>(null);
   const [rowsPerPage, setRowsPerPage] = React.useState(DEFAULT_ROWS_PER_PAGE);
   const [paddingHeight, setPaddingHeight] = React.useState(0);
+  const [resolveDetailOpen, setResolveDetailOpen] = React.useState(false);
+  const [resolveDetails, setResolveDetails] = React.useState('');
 
   React.useEffect(() => {
     let rowsOnMount = stableSort(
@@ -500,6 +515,7 @@ export default function EnhancedTable(props: TableProps) {
       const resFetch = await fetch(`${URL}/${issue}`);
       const resFetchJSON = await resFetch.json();
       resFetchJSON.status = 'RESOLVED';
+      resFetchJSON.resolutionDetails = resolveDetails;
       const date = new Date();
       resFetchJSON.dateResolved = {
         year: date.getFullYear(),
@@ -521,7 +537,8 @@ export default function EnhancedTable(props: TableProps) {
   }
 
   // Add this function inside the EnhancedTable component
-  const handleBatchDelete = async () => {
+  const handleBatchResolve = async () => {
+    setResolveDetailOpen(false);
     // @ts-ignore
     await resolveIssues(selected); // Add await keyword here
     // Call getData to refresh the data in the parent component
@@ -531,6 +548,11 @@ export default function EnhancedTable(props: TableProps) {
     // update the rows in the table
     // @ts-ignore
     setRows(data);
+    setResolveDetails('');
+  };
+
+  const handleResolve = () => {
+    setResolveDetailOpen(true);
   };
 
   const handleDelete = async () => {
@@ -633,11 +655,33 @@ export default function EnhancedTable(props: TableProps) {
     setVisibleRows(updatedRows);
   }, [rows]);
 
+  const handleDetailChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setResolveDetails(event.target.value);
+  };
+
   /* eslint-disable max-len */
   return (
     <Box sx={{ width: '100%' }}>
       <Paper sx={{ width: '100%', mb: 2 }}>
-        <EnhancedTableToolbar numSelected={selected.length} handleBatchDelete={handleBatchDelete} handleMerge={handleMerge} handleDelete={handleDelete} />
+        <EnhancedTableToolbar numSelected={selected.length} handleResolve={handleResolve} handleMerge={handleMerge} handleDelete={handleDelete} />
+        <Dialog open={resolveDetailOpen} PaperProps={{ sx: { width: '60%' } }}>
+          <DialogTitle>Resolution Details</DialogTitle>
+          <DialogContent>
+            <TextField
+              label="Enter Details"
+              multiline
+              rows={6}
+              variant="standard"
+              fullWidth
+              value={resolveDetails}
+              onChange={handleDetailChange}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setResolveDetailOpen(false)}>Cancel</Button>
+            <Button onClick={handleBatchResolve}>Resolve</Button>
+          </DialogActions>
+        </Dialog>
         <TableContainer>
           <Table
             sx={{ minWidth: 750 }}
@@ -695,6 +739,7 @@ export default function EnhancedTable(props: TableProps) {
                       <TableCell align="right">{row.description}</TableCell>
                       <TableCell align="right">{displayDate(row.dateReported)}</TableCell>
                       <TableCell align="right">{displayDate(row.dateResolved)}</TableCell>
+                      <TableCell align="right">{row.resolutionDetails}</TableCell>
                     </TableRow>
                   );
                 })
