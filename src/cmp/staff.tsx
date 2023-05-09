@@ -57,7 +57,7 @@ export default function Staff() {
   const EQUIPMENT_URL = 'https://urepair.me/equipment';
 
   const getData = async () => {
-    const res = await fetch(ISSUE_URL);
+    const res = await fetch(ISSUE_URL, { credentials: 'include' });
     const resJSON = await res.json();
     setData(resJSON.issue_table);
     setHasData(true);
@@ -65,7 +65,7 @@ export default function Staff() {
   };
 
   const getEquipment = async () => {
-    const res = await fetch(EQUIPMENT_URL);
+    const res = await fetch(EQUIPMENT_URL, { credentials: 'include' });
     const resJSON = await res.json();
     resJSON.equipment_table.sort((a: Equipment, b: Equipment) => a.id - b.id);
     setEquipment(resJSON.equipment_table);

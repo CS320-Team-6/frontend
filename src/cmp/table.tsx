@@ -21,6 +21,7 @@ import CheckIcon from '@mui/icons-material/Check';
 import MergeIcon from '@mui/icons-material/Merge';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
 import { visuallyHidden } from '@mui/utils';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
@@ -29,6 +30,9 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import { MouseEvent } from 'react';
+import {
+  MenuItem, FormControl, Select, InputLabel,
+} from '@mui/material';
 
 interface MyDate {
   year: number;
@@ -306,11 +310,12 @@ interface EnhancedTableToolbarProps {
   handleResolve: () => void;
   handleMerge: () => void;
   handleDelete: () => void;
+  handleEdit: () => void;
 }
 
 function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
   const {
-    numSelected, handleResolve, handleMerge, handleDelete,
+    numSelected, handleResolve, handleMerge, handleDelete, handleEdit,
   } = props;
 
   return (
@@ -347,6 +352,13 @@ function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
           Issues
         </Typography>
       )}
+      {numSelected === 1 ? (
+        <Tooltip title="Edit">
+          <IconButton onClick={handleEdit}>
+            <EditIcon />
+          </IconButton>
+        </Tooltip>
+      ) : null}
       {numSelected > 1 ? (
         <Tooltip title="Merge">
           <IconButton onClick={handleMerge}>
@@ -378,6 +390,11 @@ function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
   );
 }
 
+interface User {
+  email: string;
+  name: string;
+}
+
 export default function EnhancedTable(props: TableProps) {
   const { issues, URL, getData } = props;
   const [rows, setRows] = React.useState<Issue[]>(issues);
@@ -391,6 +408,12 @@ export default function EnhancedTable(props: TableProps) {
   const [paddingHeight, setPaddingHeight] = React.useState(0);
   const [resolveDetailOpen, setResolveDetailOpen] = React.useState(false);
   const [resolveDetails, setResolveDetails] = React.useState('');
+  const [editOpen, setEditOpen] = React.useState(false);
+  const [editAssignedTo, setEditAssignedTo] = React.useState('');
+  const [editNotes, setEditNotes] = React.useState('');
+  const [editStatus, setEditStatus] = React.useState('');
+  const [editPriority, setEditPriority] = React.useState('');
+  const [users, setUsers] = React.useState<User[]>([]);
 
   React.useEffect(() => {
     let rowsOnMount = stableSort(
@@ -512,7 +535,7 @@ export default function EnhancedTable(props: TableProps) {
     /* eslint-disable no-await-in-loop */
     /* eslint-disable no-restricted-syntax */
     for (const issue of selected_issues) {
-      const resFetch = await fetch(`${URL}/${issue}`);
+      const resFetch = await fetch(`${URL}/${issue}`, { credentials: 'include' });
       const resFetchJSON = await resFetch.json();
       resFetchJSON.status = 'RESOLVED';
       resFetchJSON.resolutionDetails = resolveDetails;
@@ -530,8 +553,10 @@ export default function EnhancedTable(props: TableProps) {
           Accept: 'application/json',
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify(resFetchJSON),
       };
+      // @ts-ignore
       await fetch(`${URL}/${issue}`, requestOptions);
     }
   }
@@ -581,7 +606,7 @@ export default function EnhancedTable(props: TableProps) {
     }
     // check that all selected issues have the same equipmentID
     const selectedIssues = await Promise.all(selected.map(async (issue) => {
-      const resFetch = await fetch(`${URL}/${issue}`);
+      const resFetch = await fetch(`${URL}/${issue}`, { credentials: 'include' });
       const resFetchJSON = await resFetch.json();
       return resFetchJSON;
     }));
@@ -625,8 +650,10 @@ export default function EnhancedTable(props: TableProps) {
         Accept: 'application/json',
         'Content-Type': 'application/json',
       },
+      credentials: 'include',
       body: JSON.stringify(newIssue),
     };
+    // @ts-ignore
     await fetch(URL, requestOptions);
     // delete the old issues
     await Promise.all(selected.map(async (issue) => {
@@ -659,11 +686,89 @@ export default function EnhancedTable(props: TableProps) {
     setResolveDetails(event.target.value);
   };
 
+  React.useEffect(() => {
+    async function fetchUsers() {
+      // fetch from urepair.me/user with credentials
+      const res = await fetch('https://urepair.me/user', { credentials: 'include' });
+      const resJSON = await res.json();
+      const userTable = resJSON.user_table;
+      const fetchedUsers = userTable.map((user: any) => ({ email: user.email, name: `${user.firstName} ${user.lastName}` }));
+      // prepend the unassigned user
+      fetchedUsers.unshift({ email: 'NULL', name: 'Unassigned' });
+      setUsers(fetchedUsers);
+    }
+    fetchUsers().then(() => console.log('fetched users'));
+  }, []);
+
+  const handleEdit = () => {
+    // set the default values for the edit form
+    // @ts-ignore
+    const selectedIssue = rows.find((issue) => issue.id === selected[0]);
+    // @ts-ignore
+    if (selectedIssue.asignedTo === null) {
+      // @ts-ignore
+      setEditAssignedTo('NULL');
+    } else {
+      // @ts-ignore
+      setEditAssignedTo(selectedIssue.assignedTo);
+    }
+    // @ts-ignore
+    setEditNotes(selectedIssue.notes);
+    // @ts-ignore
+    setEditStatus(selectedIssue.status);
+    // @ts-ignore
+    setEditPriority(selectedIssue.priority);
+    setEditOpen(true);
+  };
+
+  /* eslint-disable-next-line max-len */
+  const editIssue = async (id: number, assignedTo: number, notes: string, status: string, priority: string) => {
+    const resFetch = await fetch(`${URL}/${id}`, { credentials: 'include' });
+    const resFetchJSON = await resFetch.json();
+    // @ts-ignore
+    if (assignedTo === 'NULL') {
+      resFetchJSON.assignedTo = null;
+    } else {
+      resFetchJSON.assignedTo = assignedTo;
+    }
+    resFetchJSON.notes = notes;
+    resFetchJSON.status = status;
+    resFetchJSON.priority = priority;
+    const requestOptions = {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      // @ts-ignore
+      body: JSON.stringify(resFetchJSON),
+    };
+    // @ts-ignore
+    await fetch(`${URL}/${id}`, requestOptions);
+  };
+
+  const handleEditSubmit = async () => {
+    setEditOpen(false);
+    // @ts-ignore
+    await editIssue(selected[0], editAssignedTo, editNotes, editStatus, editPriority);
+    // Call getData to refresh the data in the parent component
+    const data = await getData();
+    setSelected([]);
+    // update the rows in the table
+    // @ts-ignore
+    setRows(data);
+    setEditAssignedTo('');
+    setEditNotes('');
+    setEditStatus('');
+    setEditPriority('');
+  };
+
   /* eslint-disable max-len */
   return (
     <Box sx={{ width: '100%' }}>
       <Paper sx={{ width: '100%', mb: 2 }}>
-        <EnhancedTableToolbar numSelected={selected.length} handleResolve={handleResolve} handleMerge={handleMerge} handleDelete={handleDelete} />
+        <EnhancedTableToolbar numSelected={selected.length} handleResolve={handleResolve} handleMerge={handleMerge} handleDelete={handleDelete} handleEdit={handleEdit} />
         <Dialog open={resolveDetailOpen} PaperProps={{ sx: { width: '60%' } }}>
           <DialogTitle>Resolution Details</DialogTitle>
           <DialogContent>
@@ -680,6 +785,71 @@ export default function EnhancedTable(props: TableProps) {
           <DialogActions>
             <Button onClick={() => setResolveDetailOpen(false)}>Cancel</Button>
             <Button onClick={handleBatchResolve}>Resolve</Button>
+          </DialogActions>
+        </Dialog>
+        <Dialog open={editOpen} PaperProps={{ sx: { width: '60%' } }}>
+          <DialogTitle>Edit Issue</DialogTitle>
+          <Box sx={{ width: '100%', height: '8px' }} />
+          <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <FormControl variant="outlined" fullWidth>
+              <InputLabel id="assigned-to-select-label">Assigned To</InputLabel>
+              <Select
+                labelId="assigned-to-select-label"
+                id="assigned-to-select"
+                value={editAssignedTo}
+                label="Assigned To"
+                onChange={(e) => setEditAssignedTo(e.target.value)}
+              >
+                {users.map((user) => (
+                  <MenuItem key={user.email} value={user.email}>
+                    {user.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <TextField
+              label="Notes"
+              multiline
+              rows={6}
+              variant="outlined"
+              value={editNotes}
+              onChange={(e) => setEditNotes(e.target.value)}
+            />
+            <FormControl variant="outlined" fullWidth>
+              <InputLabel id="status-select-label">Status</InputLabel>
+              <Select
+                labelId="status-select-label"
+                id="status-select"
+                value={editStatus}
+                label="Status"
+                onChange={(e) => setEditStatus(e.target.value)}
+              >
+                <MenuItem value="NEW">New</MenuItem>
+                <MenuItem value="IN_PROGRESS">In Progress</MenuItem>
+                <MenuItem value="RESOLVED">Resolved</MenuItem>
+              </Select>
+            </FormControl>
+            <FormControl variant="outlined" fullWidth>
+              <InputLabel id="priority-select-label">Priority</InputLabel>
+              <Select
+                labelId="priority-select-label"
+                id="priority-select"
+                value={editPriority}
+                label="Priority"
+                onChange={(e) => setEditPriority(e.target.value)}
+              >
+                <MenuItem value="LOW">Low</MenuItem>
+                <MenuItem value="MEDIUM">Medium</MenuItem>
+                <MenuItem value="HIGH">High</MenuItem>
+                <MenuItem value="URGENT">Urgent</MenuItem>
+              </Select>
+            </FormControl>
+          </DialogContent>
+          <DialogActions sx={{ padding: '16px' }}>
+            <Button onClick={() => setEditOpen(false)}>Cancel</Button>
+            <Button variant="contained" onClick={handleEditSubmit} color="primary">
+              Submit
+            </Button>
           </DialogActions>
         </Dialog>
         <TableContainer>

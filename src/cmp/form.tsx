@@ -50,8 +50,10 @@ export default function Form() {
         Accept: 'application/json',
         'Content-Type': 'application/json',
       },
+      credentials: 'include',
       body: JSON.stringify(ticket),
     };
+    // @ts-ignore
     await fetch(URL, requestOptions)
       .then((response) => setSuccessfulSub(response.ok));
     // .catch((error) => console.log(error));
