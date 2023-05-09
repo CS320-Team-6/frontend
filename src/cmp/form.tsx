@@ -1,16 +1,15 @@
 import React, { useEffect, useState } from 'react';
-
 import {
-  TextField,
-  MenuItem,
+  Alert,
+  Autocomplete,
   Box,
   Button,
-  Alert,
+  MenuItem,
+  TextField,
 } from '@mui/material';
-import Autocomplete from '@mui/material/Autocomplete';
-import '../styles/App.css';
 import priorities from './priorities.json';
 import problems from './problems.json';
+import '../styles/App.css';
 
 export default function Form() {
   const [Id, setId] = useState('');
@@ -73,14 +72,15 @@ export default function Form() {
   const handleIdChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setId(event.target.value);
   };
+
   const handlePriorityChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setPriority(event.target.value);
   };
+
   const handleProblemChange = (event: React.SyntheticEvent, value: string | null) => {
-    if (value) {
-      setProblem(value);
-    }
+    if (value) setProblem(value);
   };
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const id = params.get('id');
@@ -135,7 +135,6 @@ export default function Form() {
           onInputChange={handleProblemChange}
           renderInput={(params) => (
             <TextField
-              // eslint-disable-next-line react/jsx-props-no-spreading
               {...params}
               label="Whats wrong?"
             />
