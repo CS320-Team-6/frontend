@@ -102,8 +102,11 @@ export default function Form() {
   }, []);
   useEffect(() => {
     const fetchEquipment = async () => {
-      const res = await fetch(`${URL}equipment/`);
+      const res = await fetch(`${URL}equipment`, {
+        credentials: 'include',
+      });
       const resJSON = await res.json();
+      console.log(resJSON);
       setEquipment(resJSON.equipment_table);
     };
     fetchEquipment();
