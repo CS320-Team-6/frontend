@@ -17,9 +17,23 @@ import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Switch from '@mui/material/Switch';
-import DeleteIcon from '@mui/icons-material/Delete';
+import CheckIcon from '@mui/icons-material/Check';
+import MergeIcon from '@mui/icons-material/Merge';
 import FilterListIcon from '@mui/icons-material/FilterList';
+import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
 import { visuallyHidden } from '@mui/utils';
+import Button from '@mui/material/Button';
+import TextField from '@mui/material/TextField';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogTitle from '@mui/material/DialogTitle';
+import Collapse from '@mui/material/Collapse';
+import { MouseEvent } from 'react';
+import {
+  MenuItem, FormControl, Select, InputLabel,
+} from '@mui/material';
 
 interface MyDate {
   year: number;
@@ -29,7 +43,12 @@ interface MyDate {
   minute: number;
 }
 
-const displayDate = (date: MyDate) => `${date.month}/${date.day}/${date.year}`;
+const displayDate = (date: MyDate) => {
+  if (date === null) {
+    return '';
+  }
+  return `${date.month}/${date.day}/${date.year}`;
+};
 
 interface Issue {
   id: number;
@@ -38,15 +57,30 @@ interface Issue {
   priority: string;
   description: string;
   dateReported: MyDate;
+  dateResolved: MyDate;
+  resolutionDetails: string | null;
+  notes: string | null;
+  assignedTo: string | null;
 }
 
 interface TableProps {
   issues: Issue[];
   URL: string;
-  getData: () => void;
+  getData: () => Promise<void>;
 }
 
 const compareDate = (a: MyDate, b: MyDate) => {
+  // if both dates are null, they are equal
+  if (a === null && b === null) {
+    return 0;
+  }
+  // if one date is null, the other is greater
+  if (a === null) {
+    return -1;
+  }
+  if (b === null) {
+    return 1;
+  }
   if (a.year < b.year) {
     return -1;
   }
@@ -111,7 +145,7 @@ function descendingComparator<T>(a: T, b: T, orderBy: keyof T) {
     }
   }
   // if orderBy "dateReported" order by date
-  if (orderBy === 'dateReported') {
+  if (orderBy === 'dateReported' || orderBy === 'dateResolved') {
     // @ts-ignore
     if (compareDate(b[orderBy], a[orderBy]) < 0) {
       return -1;
@@ -131,8 +165,8 @@ function getComparator<Key extends keyof any>(
   order: Order,
   orderBy: Key,
 ): (
-    a: { [key in Key]: number | string | MyDate },
-    b: { [key in Key]: number | string | MyDate },
+    a: { [key in Key]: number | string | MyDate | null },
+    b: { [key in Key]: number | string | MyDate | null },
   ) => number {
   return order === 'desc'
     ? (a, b) => descendingComparator(a, b, orderBy)
@@ -188,21 +222,21 @@ const headCells: readonly HeadCell[] = [
     label: 'Priority',
   },
   {
-    id: 'description',
-    numeric: false,
-    disablePadding: false,
-    label: 'Description',
-  },
-  {
     id: 'dateReported',
     numeric: false,
     disablePadding: false,
     label: 'Date Reported',
   },
+  {
+    id: 'dateResolved',
+    numeric: false,
+    disablePadding: false,
+    label: 'Date Resolved',
+  },
 ];
 
-const DEFAULT_ORDER = 'asc';
-const DEFAULT_ORDER_BY = 'id';
+const DEFAULT_ORDER = 'desc';
+const DEFAULT_ORDER_BY = 'dateReported';
 const DEFAULT_ROWS_PER_PAGE = 10;
 
 interface EnhancedTableProps {
@@ -245,7 +279,7 @@ function EnhancedTableHead(props: EnhancedTableProps) {
           >
             <TableSortLabel
               active={orderBy === headCell.id}
-              direction={orderBy === headCell.id ? order : 'asc'}
+              direction={orderBy === headCell.id ? order : 'desc'}
               onClick={createSortHandler(headCell.id)}
             >
               {headCell.label}
@@ -264,10 +298,16 @@ function EnhancedTableHead(props: EnhancedTableProps) {
 
 interface EnhancedTableToolbarProps {
   numSelected: number;
+  handleResolve: () => void;
+  handleMerge: () => void;
+  handleDelete: () => void;
+  handleEdit: () => void;
 }
 
 function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
-  const { numSelected } = props;
+  const {
+    numSelected, handleResolve, handleMerge, handleDelete, handleEdit,
+  } = props;
 
   return (
     <Toolbar
@@ -303,12 +343,33 @@ function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
           Issues
         </Typography>
       )}
-      {numSelected > 0 ? (
-        <Tooltip title="Delete">
-          <IconButton>
-            <DeleteIcon />
+      {numSelected === 1 ? (
+        <Tooltip title="Edit">
+          <IconButton onClick={handleEdit}>
+            <EditIcon />
           </IconButton>
         </Tooltip>
+      ) : null}
+      {numSelected > 1 ? (
+        <Tooltip title="Merge">
+          <IconButton onClick={handleMerge}>
+            <MergeIcon />
+          </IconButton>
+        </Tooltip>
+      ) : null}
+      {numSelected > 0 ? (
+        <>
+          <Tooltip title="Resolve">
+            <IconButton onClick={handleResolve}>
+              <CheckIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Delete">
+            <IconButton onClick={handleDelete}>
+              <DeleteIcon />
+            </IconButton>
+          </Tooltip>
+        </>
       ) : (
         <Tooltip title="Filter list">
           <IconButton>
@@ -320,9 +381,14 @@ function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
   );
 }
 
+interface User {
+  email: string;
+  name: string;
+}
+
 export default function EnhancedTable(props: TableProps) {
   const { issues, URL, getData } = props;
-  const rows = issues;
+  const [rows, setRows] = React.useState<Issue[]>(issues);
   const [order, setOrder] = React.useState<Order>(DEFAULT_ORDER);
   const [orderBy, setOrderBy] = React.useState<keyof Issue>(DEFAULT_ORDER_BY);
   const [selected, setSelected] = React.useState<readonly string[]>([]);
@@ -331,8 +397,15 @@ export default function EnhancedTable(props: TableProps) {
   const [visibleRows, setVisibleRows] = React.useState<Issue[] | null>(null);
   const [rowsPerPage, setRowsPerPage] = React.useState(DEFAULT_ROWS_PER_PAGE);
   const [paddingHeight, setPaddingHeight] = React.useState(0);
-
-  console.log(URL, getData);
+  const [resolveDetailOpen, setResolveDetailOpen] = React.useState(false);
+  const [resolveDetails, setResolveDetails] = React.useState('');
+  const [editOpen, setEditOpen] = React.useState(false);
+  const [editAssignedTo, setEditAssignedTo] = React.useState('');
+  const [editNotes, setEditNotes] = React.useState('');
+  const [editStatus, setEditStatus] = React.useState('');
+  const [editPriority, setEditPriority] = React.useState('');
+  const [users, setUsers] = React.useState<User[]>([]);
+  const [selectedRow, setSelectedRow] = React.useState<string>('');
 
   React.useEffect(() => {
     let rowsOnMount = stableSort(
@@ -350,11 +423,20 @@ export default function EnhancedTable(props: TableProps) {
   const handleRequestSort = React.useCallback(
     (event: React.MouseEvent<unknown>, newOrderBy: keyof Issue) => {
       const isAsc = orderBy === newOrderBy && order === 'asc';
-      const toggledOrder = isAsc ? 'desc' : 'asc';
+      /* eslint-disable no-nested-ternary */
+      const toggledOrder = orderBy !== newOrderBy ? 'desc' : isAsc ? 'desc' : 'asc';
       setOrder(toggledOrder);
       setOrderBy(newOrderBy);
 
       const sortedRows = stableSort(rows, getComparator(toggledOrder, newOrderBy));
+      const newLastPage = Math.ceil(sortedRows.length / rowsPerPage) - 1;
+
+      if (page === newLastPage) {
+        setPage(newLastPage);
+      } else {
+        setPage(0);
+      }
+
       const updatedRows = sortedRows.slice(
         page * rowsPerPage,
         page * rowsPerPage + rowsPerPage,
@@ -377,6 +459,12 @@ export default function EnhancedTable(props: TableProps) {
   const handleClick = (event: React.MouseEvent<unknown>, name: string) => {
     const selectedIndex = selected.indexOf(name);
     let newSelected: readonly string[] = [];
+
+    if (selectedRow === name) {
+      setSelectedRow('');
+    } else {
+      setSelectedRow(name);
+    }
 
     if (selectedIndex === -1) {
       newSelected = newSelected.concat(selected, name);
@@ -440,10 +528,328 @@ export default function EnhancedTable(props: TableProps) {
 
   const isSelected = (name: string) => selected.indexOf(name) !== -1;
 
+  // Resolves the selected issues
+  async function resolveIssues(selected_issues: any[]) {
+    /* eslint-disable no-await-in-loop */
+    /* eslint-disable no-restricted-syntax */
+    for (const issue of selected_issues) {
+      const resFetch = await fetch(`${URL}/${issue}`, { credentials: 'include' });
+      const resFetchJSON = await resFetch.json();
+      resFetchJSON.status = 'RESOLVED';
+      resFetchJSON.resolutionDetails = resolveDetails;
+      const date = new Date();
+      resFetchJSON.dateResolved = {
+        year: date.getFullYear(),
+        month: date.getMonth() + 1, // add 1 because getMonth() returns 0-based index
+        day: date.getDate(),
+        hour: date.getHours(),
+        minute: date.getMinutes(),
+      };
+      const requestOptions = {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(resFetchJSON),
+      };
+      // @ts-ignore
+      await fetch(`${URL}/${issue}`, requestOptions);
+    }
+  }
+
+  // Add this function inside the EnhancedTable component
+  const handleBatchResolve = async () => {
+    setResolveDetailOpen(false);
+    // @ts-ignore
+    await resolveIssues(selected); // Add await keyword here
+    // Call getData to refresh the data in the parent component
+    const data = await getData();
+
+    setSelected([]);
+    // update the rows in the table
+    // @ts-ignore
+    setRows(data);
+    setResolveDetails('');
+  };
+
+  const handleResolve = () => {
+    setResolveDetailOpen(true);
+  };
+
+  const handleDelete = async () => {
+    // delete selected issues
+    await Promise.all(selected.map(async (issue) => {
+      const requestOptions = {
+        method: 'DELETE',
+        credentials: 'include',
+      };
+      // @ts-ignore
+      await fetch(`${URL}/${issue}`, requestOptions);
+    }));
+    // Call getData to refresh the data in the parent component
+    const data = await getData();
+    setSelected([]);
+    // update the rows in the table
+    // @ts-ignore
+    setRows(data);
+  };
+
+  const handleMerge = async () => {
+    // check that there are at least 2 issues selected
+    if (selected.length < 2) {
+      alert('Please select at least 2 issues to merge.');
+      return;
+    }
+    // check that all selected issues have the same equipmentID
+    const selectedIssues = await Promise.all(selected.map(async (issue) => {
+      const resFetch = await fetch(`${URL}/${issue}`, { credentials: 'include' });
+      const resFetchJSON = await resFetch.json();
+      return resFetchJSON;
+    }));
+    const equipmentIDs = selectedIssues.map((issue) => issue.equipmentId);
+    // @ts-ignore
+    const uniqueEquipmentIDs = [...new Set(equipmentIDs)];
+    console.log(uniqueEquipmentIDs);
+    if (uniqueEquipmentIDs.length > 1) {
+      alert('Please select issues with the same equipmentID to merge.');
+      return;
+    }
+    // create a new issue with the same equipmentID
+    const priorityOrder = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'];
+    const priorities = selectedIssues.map((issue) => issue.priority);
+    /* eslint-disable-next-line max-len */
+    const maxPriority = priorities.reduce((a, b) => (priorityOrder.indexOf(a) > priorityOrder.indexOf(b) ? a : b));
+    const mergedDescription = selectedIssues.map((issue) => issue.description).join('\n');
+    const date = new Date();
+    const newIssue = {
+      id: 1,
+      equipmentId: uniqueEquipmentIDs[0],
+      status: 'NEW',
+      dateReported: {
+        year: date.getFullYear(),
+        month: date.getMonth() + 1, // add 1 because getMonth() returns 0-based index
+        day: date.getDate(),
+        hour: date.getHours(),
+        minute: date.getMinutes(),
+      },
+      priority: maxPriority,
+      description: mergedDescription,
+      assignedTo: null,
+      dateResolved: null,
+      resolutionDetails: null,
+      notes: null,
+    };
+    // create the new issue
+    const requestOptions = {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify(newIssue),
+    };
+    // @ts-ignore
+    await fetch(URL, requestOptions);
+    // delete the old issues
+    await Promise.all(selected.map(async (issue) => {
+      const requestOptionsDelete = {
+        method: 'DELETE',
+        credentials: 'include',
+      };
+      // @ts-ignore
+      await fetch(`${URL}/${issue}`, requestOptionsDelete);
+    }));
+    const data = await getData();
+
+    setSelected([]);
+    // update the rows in the table
+    // @ts-ignore
+    setRows(data);
+  };
+
+  // refresh table when visible rows change
+  React.useEffect(() => {
+    const sortedRows = stableSort(rows, getComparator(order, orderBy));
+    const updatedRows = sortedRows.slice(
+      page * rowsPerPage,
+      page * rowsPerPage + rowsPerPage,
+    );
+    setVisibleRows(updatedRows);
+  }, [rows]);
+
+  const handleDetailChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setResolveDetails(event.target.value);
+  };
+
+  React.useEffect(() => {
+    async function fetchUsers() {
+      // fetch from urepair.me/user with credentials
+      const res = await fetch('https://urepair.me/user', { credentials: 'include' });
+      const resJSON = await res.json();
+      const userTable = resJSON.user_table;
+      const fetchedUsers = userTable.map((user: any) => ({ email: user.email, name: `${user.firstName} ${user.lastName}` }));
+      // prepend the unassigned user
+      fetchedUsers.unshift({ email: 'NULL', name: 'Unassigned' });
+      setUsers(fetchedUsers);
+    }
+    fetchUsers().then(() => console.log('fetched users'));
+  }, []);
+
+  const handleEdit = () => {
+    // set the default values for the edit form
+    // @ts-ignore
+    const selectedIssue = rows.find((issue) => issue.id === selected[0]);
+    // @ts-ignore
+    if (selectedIssue.asignedTo === null) {
+      // @ts-ignore
+      setEditAssignedTo('NULL');
+    } else {
+      // @ts-ignore
+      setEditAssignedTo(selectedIssue.assignedTo);
+    }
+    // @ts-ignore
+    setEditNotes(selectedIssue.notes);
+    // @ts-ignore
+    setEditStatus(selectedIssue.status);
+    // @ts-ignore
+    setEditPriority(selectedIssue.priority);
+    setEditOpen(true);
+  };
+
+  /* eslint-disable-next-line max-len */
+  const editIssue = async (id: number, assignedTo: number, notes: string, status: string, priority: string) => {
+    const resFetch = await fetch(`${URL}/${id}`, { credentials: 'include' });
+    const resFetchJSON = await resFetch.json();
+    // @ts-ignore
+    if (assignedTo === 'NULL') {
+      resFetchJSON.assignedTo = null;
+    } else {
+      resFetchJSON.assignedTo = assignedTo;
+    }
+    resFetchJSON.notes = notes;
+    resFetchJSON.status = status;
+    resFetchJSON.priority = priority;
+    const requestOptions = {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      // @ts-ignore
+      body: JSON.stringify(resFetchJSON),
+    };
+    // @ts-ignore
+    await fetch(`${URL}/${id}`, requestOptions);
+  };
+
+  const handleEditSubmit = async () => {
+    setEditOpen(false);
+    // @ts-ignore
+    await editIssue(selected[0], editAssignedTo, editNotes, editStatus, editPriority);
+    // Call getData to refresh the data in the parent component
+    const data = await getData();
+    setSelected([]);
+    // update the rows in the table
+    // @ts-ignore
+    setRows(data);
+    setEditAssignedTo('');
+    setEditNotes('');
+    setEditStatus('');
+    setEditPriority('');
+  };
+
+  /* eslint-disable max-len */
   return (
     <Box sx={{ width: '100%' }}>
       <Paper sx={{ width: '100%', mb: 2 }}>
-        <EnhancedTableToolbar numSelected={selected.length} />
+        <EnhancedTableToolbar numSelected={selected.length} handleResolve={handleResolve} handleMerge={handleMerge} handleDelete={handleDelete} handleEdit={handleEdit} />
+        <Dialog open={resolveDetailOpen} PaperProps={{ sx: { width: '60%' } }}>
+          <DialogTitle>Resolution Details</DialogTitle>
+          <DialogContent>
+            <TextField
+              label="Enter Details"
+              multiline
+              rows={6}
+              variant="standard"
+              fullWidth
+              value={resolveDetails}
+              onChange={handleDetailChange}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setResolveDetailOpen(false)}>Cancel</Button>
+            <Button onClick={handleBatchResolve}>Resolve</Button>
+          </DialogActions>
+        </Dialog>
+        <Dialog open={editOpen} PaperProps={{ sx: { width: '60%' } }}>
+          <DialogTitle>Edit Issue</DialogTitle>
+          <Box sx={{ width: '100%', height: '8px' }} />
+          <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <FormControl variant="outlined" fullWidth>
+              <InputLabel id="assigned-to-select-label">Assigned To</InputLabel>
+              <Select
+                labelId="assigned-to-select-label"
+                id="assigned-to-select"
+                value={editAssignedTo}
+                label="Assigned To"
+                onChange={(e) => setEditAssignedTo(e.target.value)}
+              >
+                {users.map((user) => (
+                  <MenuItem key={user.email} value={user.email}>
+                    {user.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <TextField
+              label="Notes"
+              multiline
+              rows={6}
+              variant="outlined"
+              value={editNotes}
+              onChange={(e) => setEditNotes(e.target.value)}
+            />
+            <FormControl variant="outlined" fullWidth>
+              <InputLabel id="status-select-label">Status</InputLabel>
+              <Select
+                labelId="status-select-label"
+                id="status-select"
+                value={editStatus}
+                label="Status"
+                onChange={(e) => setEditStatus(e.target.value)}
+              >
+                <MenuItem value="NEW">New</MenuItem>
+                <MenuItem value="IN_PROGRESS">In Progress</MenuItem>
+                <MenuItem value="RESOLVED">Resolved</MenuItem>
+              </Select>
+            </FormControl>
+            <FormControl variant="outlined" fullWidth>
+              <InputLabel id="priority-select-label">Priority</InputLabel>
+              <Select
+                labelId="priority-select-label"
+                id="priority-select"
+                value={editPriority}
+                label="Priority"
+                onChange={(e) => setEditPriority(e.target.value)}
+              >
+                <MenuItem value="LOW">Low</MenuItem>
+                <MenuItem value="MEDIUM">Medium</MenuItem>
+                <MenuItem value="HIGH">High</MenuItem>
+                <MenuItem value="URGENT">Urgent</MenuItem>
+              </Select>
+            </FormControl>
+          </DialogContent>
+          <DialogActions sx={{ padding: '16px' }}>
+            <Button onClick={() => setEditOpen(false)}>Cancel</Button>
+            <Button variant="contained" onClick={handleEditSubmit} color="primary">
+              Submit
+            </Button>
+          </DialogActions>
+        </Dialog>
         <TableContainer>
           <Table
             sx={{ minWidth: 750 }}
@@ -464,43 +870,78 @@ export default function EnhancedTable(props: TableProps) {
                   // @ts-ignore
                   const isItemSelected = isSelected(row.id);
                   const labelId = `enhanced-table-checkbox-${index}`;
-
                   // @ts-ignore
+                  const isOpen = selectedRow === row.id;
+
                   return (
-                    <TableRow
-                      hover
-                      onClick={(event) => handleClick(event, (row.id as unknown as string))}
-                      role="checkbox"
-                      aria-checked={isItemSelected}
-                      tabIndex={-1}
-                      key={row.id}
-                      selected={isItemSelected}
-                      sx={{ cursor: 'pointer' }}
-                    >
-                      <TableCell padding="checkbox">
-                        <Checkbox
-                          color="primary"
-                          checked={isItemSelected}
-                          inputProps={{
-                            'aria-labelledby': labelId,
-                          }}
-                        />
-                      </TableCell>
-                      <TableCell
-                        component="th"
-                        id={labelId}
-                        scope="row"
-                        padding="none"
-                        align="right"
+                    <React.Fragment key={row.id}>
+                      <TableRow
+                        hover
+                        onClick={(event) => handleClick(event, row.id as unknown as string)}
+                        role="checkbox"
+                        aria-checked={isItemSelected}
+                        tabIndex={-1}
+                        selected={isItemSelected}
+                        sx={{ cursor: 'pointer' }}
                       >
-                        {row.id}
-                      </TableCell>
-                      <TableCell align="right">{row.equipmentId}</TableCell>
-                      <TableCell align="right">{row.status}</TableCell>
-                      <TableCell align="right">{row.priority}</TableCell>
-                      <TableCell align="right">{row.description}</TableCell>
-                      <TableCell align="right">{displayDate(row.dateReported)}</TableCell>
-                    </TableRow>
+                        <TableCell padding="checkbox">
+                          <Checkbox
+                            color="primary"
+                            checked={isItemSelected}
+                            inputProps={{
+                              'aria-labelledby': labelId,
+                            }}
+                          />
+                        </TableCell>
+                        <TableCell
+                          component="th"
+                          id={labelId}
+                          scope="row"
+                          padding="none"
+                          align="right"
+                        >
+                          {row.id}
+                        </TableCell>
+                        <TableCell align="right">{row.equipmentId}</TableCell>
+                        <TableCell align="right">{row.status}</TableCell>
+                        <TableCell align="right">{row.priority}</TableCell>
+                        <TableCell align="right">{displayDate(row.dateReported)}</TableCell>
+                        <TableCell align="right">{displayDate(row.dateResolved)}</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={9}>
+                          <Collapse in={isOpen}>
+                            <div style={{ padding: '16px 0' }}>
+                              <Typography variant="h6" gutterBottom component="div">
+                                {`Issue ${row.id}`}
+                              </Typography>
+                              <Typography variant="body1" component="div" style={{ marginTop: '16px' }}>
+                                <b>Description:</b>
+                                {' '}
+                                {row.description}
+                                {' '}
+                                <br />
+                                <br />
+                                <b>Notes:</b>
+                                {' '}
+                                {row.notes}
+                                {' '}
+                                <br />
+                                <br />
+                                <b>Resolution Details:</b>
+                                {' '}
+                                {row.resolutionDetails}
+                                <br />
+                                <br />
+                                <b>Assigned To:</b>
+                                {' '}
+                                {row.assignedTo}
+                              </Typography>
+                            </div>
+                          </Collapse>
+                        </TableCell>
+                      </TableRow>
+                    </React.Fragment>
                   );
                 })
                 : null}

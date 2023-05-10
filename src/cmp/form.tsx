@@ -9,7 +9,7 @@ import {
 } from '@mui/material';
 import priorities from './priorities.json';
 import problems from './problems.json';
-import '../styles/App.css';
+import { Equipment } from './equipment';
 
 export default function Form() {
   const [Id, setId] = useState('');
@@ -20,7 +20,9 @@ export default function Form() {
   const [successfulSub, setSuccessfulSub] = useState(false);
   const [hasRes, setHasRes] = useState(false);
   const [btnTxt, setBtnTxt] = useState('Submit');
-  const URL = 'https://urepair.me/issue';
+  const [equipment, setEquipment] = useState<Equipment[]>([]);
+  const [isAutofiled, setIsAutofilled] = useState(false);
+  const URL = 'https://urepair.me/';
   const postData = async () => {
     setSubmitted(true);
     setBtnTxt('Loading...');
@@ -49,9 +51,11 @@ export default function Form() {
         Accept: 'application/json',
         'Content-Type': 'application/json',
       },
+      credentials: 'include',
       body: JSON.stringify(ticket),
     };
-    await fetch(URL, requestOptions)
+    // @ts-ignore
+    await fetch(`${URL}issue`, requestOptions)
       .then((response) => setSuccessfulSub(response.ok));
     // .catch((error) => console.log(error));
     setHasRes(true);
@@ -80,7 +84,11 @@ export default function Form() {
   const handleProblemChange = (event: React.SyntheticEvent, value: string | null) => {
     if (value) setProblem(value);
   };
-
+  const handleEquipmentChange = (event: React.SyntheticEvent, value: string | null) => {
+    if (value) {
+      setId(value.split(' - ')[0]);
+    }
+  };
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const id = params.get('id');
@@ -90,13 +98,30 @@ export default function Form() {
       document.getElementById('standard-basic')?.setAttribute('disabled', 'true');
       // gray out the id field
       document.getElementById('standard-basic')?.setAttribute('style', 'background-color: #e0e0e0');
+      setIsAutofilled(true);
     }
+  }, []);
+  useEffect(() => {
+    const fetchEquipment = async () => {
+      const res = await fetch(`${URL}equipment`);
+      const resJSON = await res.json();
+      console.log(resJSON);
+      setEquipment(resJSON.equipment_table);
+    };
+    fetchEquipment();
   }, []);
 
   return (
     <>
       <h1 className="title">
-        Welcome to URepair!
+        <style>
+          {
+            `.logo-img {
+                margin-top: 6rem;
+            }`
+          }
+        </style>
+        <img src="https://cdn.discordapp.com/attachments/702265921288536099/1103155461890527262/logo.png" width="300" alt="logo" className="logo-img" />
       </h1>
       <Box
         component="form"
@@ -109,12 +134,35 @@ export default function Form() {
         noValidate
         autoComplete="off"
       >
-        <TextField
-          id="standard-basic"
-          label="Equipment-Id"
-          value={Id}
-          onChange={handleIdChange}
-        />
+        {
+          isAutofiled
+          && (
+          <TextField
+            id="standard-basic"
+            label="Equipment-Id"
+            disabled // TODO: remove this, i think i might've broken the other disable somehow
+            value={Id}
+            onChange={handleIdChange}
+          />
+          )
+        }
+        {
+          !isAutofiled
+          && (
+          <Autocomplete
+            id="outlined-select-problem"
+            options={equipment && equipment.map((e) => `${e.id} - ${e.name}`)}
+            onInputChange={handleEquipmentChange}
+            renderInput={(params) => (
+              <TextField
+                // eslint-disable-next-line react/jsx-props-no-spreading
+                {...params}
+                label="Broken Equipment"
+              />
+            )}
+          />
+          )
+        }
         <TextField
           id="outlined-select-priority"
           select
