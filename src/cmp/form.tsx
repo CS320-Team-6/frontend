@@ -21,7 +21,7 @@ export default function Form() {
   const [hasRes, setHasRes] = useState(false);
   const [btnTxt, setBtnTxt] = useState('Submit');
   const [equipment, setEquipment] = useState<Equipment[]>([]);
-  const [isAutofiled, setIsAutofilled] = useState(false);
+  const [isAutoFilled, setIsAutoFilled] = useState(false);
   const URL = 'https://urepair.me/';
   const postData = async () => {
     setSubmitted(true);
@@ -84,11 +84,13 @@ export default function Form() {
   const handleProblemChange = (event: React.SyntheticEvent, value: string | null) => {
     if (value) setProblem(value);
   };
+
   const handleEquipmentChange = (event: React.SyntheticEvent, value: string | null) => {
     if (value) {
       setId(value.split(' - ')[0]);
     }
   };
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const id = params.get('id');
@@ -98,9 +100,10 @@ export default function Form() {
       document.getElementById('standard-basic')?.setAttribute('disabled', 'true');
       // gray out the id field
       document.getElementById('standard-basic')?.setAttribute('style', 'background-color: #e0e0e0');
-      setIsAutofilled(true);
+      setIsAutoFilled(true);
     }
   }, []);
+
   useEffect(() => {
     const fetchEquipment = async () => {
       const res = await fetch(`${URL}equipment`);
@@ -135,7 +138,7 @@ export default function Form() {
         autoComplete="off"
       >
         {
-          isAutofiled
+          isAutoFilled
           && (
           <TextField
             id="standard-basic"
@@ -147,7 +150,7 @@ export default function Form() {
           )
         }
         {
-          !isAutofiled
+          !isAutoFilled
           && (
           <Autocomplete
             id="outlined-select-problem"
