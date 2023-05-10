@@ -2,6 +2,8 @@
 import React, { useState } from 'react';
 import { Box, Button } from '@mui/material';
 import EnhancedTable from './table';
+import EnhancedUserTable from './userTable';
+import { User } from './interfaces/user';
 
 interface Issue {
   id: number;
@@ -47,12 +49,12 @@ interface Equipment {
     day: number
   }
 }
-interface User {
+/* interface User {
   firstName: string;
   lastName: string;
   email: string;
   role: string;
-}
+} */
 
 export default function Staff() {
   const [data, setData] = useState(new Array<Issue>());
@@ -136,7 +138,7 @@ export default function Staff() {
       </Box>
       {hasData && activeTable === 'issues' && <EnhancedTable URL={`${URL}/issue`} issues={data} getData={getData} />}
       {hasEquipment && activeTable === 'equipment' && JSON.stringify(equipment)}
-      {hasUsers && activeTable === 'users' && JSON.stringify(users)}
+      {hasUsers && activeTable === 'users' && <EnhancedUserTable URL={`${URL}/user`} issues={users} getData={getUsers} />}
     </>
   );
 }
