@@ -29,6 +29,7 @@ import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
+import Collapse from '@mui/material/Collapse';
 import { MouseEvent } from 'react';
 import {
   MenuItem, FormControl, Select, InputLabel,
@@ -58,6 +59,8 @@ interface Issue {
   dateReported: MyDate;
   dateResolved: MyDate;
   resolutionDetails: string | null;
+  notes: string | null;
+  assignedTo: string | null;
 }
 
 interface TableProps {
@@ -219,12 +222,6 @@ const headCells: readonly HeadCell[] = [
     label: 'Priority',
   },
   {
-    id: 'description',
-    numeric: false,
-    disablePadding: false,
-    label: 'Description',
-  },
-  {
     id: 'dateReported',
     numeric: false,
     disablePadding: false,
@@ -235,12 +232,6 @@ const headCells: readonly HeadCell[] = [
     numeric: false,
     disablePadding: false,
     label: 'Date Resolved',
-  },
-  {
-    id: 'resolutionDetails',
-    numeric: false,
-    disablePadding: false,
-    label: 'Resolution Details',
   },
 ];
 
@@ -414,6 +405,7 @@ export default function EnhancedTable(props: TableProps) {
   const [editStatus, setEditStatus] = React.useState('');
   const [editPriority, setEditPriority] = React.useState('');
   const [users, setUsers] = React.useState<User[]>([]);
+  const [selectedRow, setSelectedRow] = React.useState<string>('');
 
   React.useEffect(() => {
     let rowsOnMount = stableSort(
@@ -467,6 +459,12 @@ export default function EnhancedTable(props: TableProps) {
   const handleClick = (event: React.MouseEvent<unknown>, name: string) => {
     const selectedIndex = selected.indexOf(name);
     let newSelected: readonly string[] = [];
+
+    if (selectedRow === name) {
+      setSelectedRow('');
+    } else {
+      setSelectedRow(name);
+    }
 
     if (selectedIndex === -1) {
       newSelected = newSelected.concat(selected, name);
@@ -872,45 +870,78 @@ export default function EnhancedTable(props: TableProps) {
                   // @ts-ignore
                   const isItemSelected = isSelected(row.id);
                   const labelId = `enhanced-table-checkbox-${index}`;
-
                   // @ts-ignore
+                  const isOpen = selectedRow === row.id;
+
                   return (
-                    <TableRow
-                      hover
-                      onClick={(event) => handleClick(event, (row.id as unknown as string))}
-                      role="checkbox"
-                      aria-checked={isItemSelected}
-                      tabIndex={-1}
-                      key={row.id}
-                      selected={isItemSelected}
-                      sx={{ cursor: 'pointer' }}
-                    >
-                      <TableCell padding="checkbox">
-                        <Checkbox
-                          color="primary"
-                          checked={isItemSelected}
-                          inputProps={{
-                            'aria-labelledby': labelId,
-                          }}
-                        />
-                      </TableCell>
-                      <TableCell
-                        component="th"
-                        id={labelId}
-                        scope="row"
-                        padding="none"
-                        align="right"
+                    <React.Fragment key={row.id}>
+                      <TableRow
+                        hover
+                        onClick={(event) => handleClick(event, row.id as unknown as string)}
+                        role="checkbox"
+                        aria-checked={isItemSelected}
+                        tabIndex={-1}
+                        selected={isItemSelected}
+                        sx={{ cursor: 'pointer' }}
                       >
-                        {row.id}
-                      </TableCell>
-                      <TableCell align="right">{row.equipmentId}</TableCell>
-                      <TableCell align="right">{row.status}</TableCell>
-                      <TableCell align="right">{row.priority}</TableCell>
-                      <TableCell align="right">{row.description}</TableCell>
-                      <TableCell align="right">{displayDate(row.dateReported)}</TableCell>
-                      <TableCell align="right">{displayDate(row.dateResolved)}</TableCell>
-                      <TableCell align="right">{row.resolutionDetails}</TableCell>
-                    </TableRow>
+                        <TableCell padding="checkbox">
+                          <Checkbox
+                            color="primary"
+                            checked={isItemSelected}
+                            inputProps={{
+                              'aria-labelledby': labelId,
+                            }}
+                          />
+                        </TableCell>
+                        <TableCell
+                          component="th"
+                          id={labelId}
+                          scope="row"
+                          padding="none"
+                          align="right"
+                        >
+                          {row.id}
+                        </TableCell>
+                        <TableCell align="right">{row.equipmentId}</TableCell>
+                        <TableCell align="right">{row.status}</TableCell>
+                        <TableCell align="right">{row.priority}</TableCell>
+                        <TableCell align="right">{displayDate(row.dateReported)}</TableCell>
+                        <TableCell align="right">{displayDate(row.dateResolved)}</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={9}>
+                          <Collapse in={isOpen}>
+                            <div style={{ padding: '16px 0' }}>
+                              <Typography variant="h6" gutterBottom component="div">
+                                {`Issue ${row.id}`}
+                              </Typography>
+                              <Typography variant="body1" component="div" style={{ marginTop: '16px' }}>
+                                <b>Description:</b>
+                                {' '}
+                                {row.description}
+                                {' '}
+                                <br />
+                                <br />
+                                <b>Notes:</b>
+                                {' '}
+                                {row.notes}
+                                {' '}
+                                <br />
+                                <br />
+                                <b>Resolution Details:</b>
+                                {' '}
+                                {row.resolutionDetails}
+                                <br />
+                                <br />
+                                <b>Assigned To:</b>
+                                {' '}
+                                {row.assignedTo}
+                              </Typography>
+                            </div>
+                          </Collapse>
+                        </TableCell>
+                      </TableRow>
+                    </React.Fragment>
                   );
                 })
                 : null}
