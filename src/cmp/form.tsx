@@ -11,6 +11,10 @@ import priorities from './priorities.json';
 import problems from './problems.json';
 import { Equipment } from './equipment';
 
+interface EquipmentResponse {
+  equipment_table: Equipment[];
+}
+
 export default function Form() {
   const [Id, setId] = useState('');
   const [date, setDate] = useState(new Date());
@@ -45,7 +49,7 @@ export default function Form() {
       resolutionDetails: null,
       notes: null,
     };
-    const requestOptions = {
+    await fetch(`${URL}issue`, {
       method: 'POST',
       headers: {
         Accept: 'application/json',
@@ -53,9 +57,7 @@ export default function Form() {
       },
       credentials: 'include',
       body: JSON.stringify(ticket),
-    };
-    // @ts-ignore
-    await fetch(`${URL}issue`, requestOptions)
+    })
       .then((response) => setSuccessfulSub(response.ok));
     // .catch((error) => console.log(error));
     setHasRes(true);
@@ -105,13 +107,17 @@ export default function Form() {
   }, []);
 
   useEffect(() => {
-    const fetchEquipment = async () => {
-      const res = await fetch(`${URL}equipment`);
-      const resJSON = await res.json();
-      console.log(resJSON);
-      setEquipment(resJSON.equipment_table);
-    };
-    fetchEquipment();
+    (async () => {
+      try {
+        const res = await fetch(`${URL}equipment`);
+        const resJSON = await res.json() as EquipmentResponse;
+        console.log(resJSON);
+        setEquipment(resJSON.equipment_table);
+      } catch (error) {
+        // Handle any errors that occur during the fetch request
+        console.error(error);
+      }
+    })();
   }, []);
 
   return (
@@ -186,6 +192,7 @@ export default function Form() {
           onInputChange={handleProblemChange}
           renderInput={(params) => (
             <TextField
+                // eslint-disable-next-line react/jsx-props-no-spreading
               {...params}
               label="Whats wrong?"
             />

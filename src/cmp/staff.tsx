@@ -55,7 +55,13 @@ interface Equipment {
   email: string;
   role: string;
 } */
+interface IssueResponse {
+  issue_table: Issue[];
+}
 
+interface UserResponse {
+  user_table: User[];
+}
 export default function Staff() {
   const [data, setData] = useState(new Array<Issue>());
   const [equipment, setEquipment] = useState(new Array<Equipment>());
@@ -68,7 +74,7 @@ export default function Staff() {
 
   const getData = async () => {
     const res = await fetch(`${URL}/issue`, { credentials: 'include' });
-    const resJSON = await res.json();
+    const resJSON = await res.json() as IssueResponse;
     setData(resJSON.issue_table);
     setHasData(true);
     setActiveTable('issues');
@@ -86,7 +92,7 @@ export default function Staff() {
 
   const getUsers = async () => {
     const res = await fetch(`${URL}/user`, { credentials: 'include' });
-    const resJSON = await res.json();
+    const resJSON = await res.json() as UserResponse;
     resJSON.user_table.sort((a: User, b: User) => {
       if (a.lastName < b.lastName) {
         return -1;
