@@ -7,12 +7,14 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
 import Link from '@mui/material/Link';
 import Box from '@mui/material/Box';
+import Grid from '@mui/material/Grid'; // Import the Grid component
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { Buffer } from 'buffer';
 import Staff from './staff';
+import ForgotPassword from './ForgotPassword'; // Import the ForgotPassword component
 
 function Copyright(props: any) {
   return (
@@ -32,6 +34,8 @@ const theme = createTheme();
 const URL :string = 'https://urepair.me/login';
 export default function SignIn() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  // eslint-disable-next-line
+  const [forgotPassword, setForgotPassword] = useState(false); // New state for handling forgot password
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
@@ -61,6 +65,10 @@ export default function SignIn() {
       console.error('Error during login:', error);
     }
   };
+
+  if (forgotPassword) {
+    return <ForgotPassword />;
+  }
 
   if (!isAuthenticated) {
     return (
@@ -114,6 +122,16 @@ export default function SignIn() {
               >
                 Sign In
               </Button>
+              <Grid container>
+                <Grid item xs>
+                  <Button
+                    color="primary"
+                    onClick={() => setForgotPassword(true)}
+                  >
+                    Forgot password?
+                  </Button>
+                </Grid>
+              </Grid>
             </Box>
           </Box>
           <Copyright sx={{ mt: 8, mb: 4 }} />
