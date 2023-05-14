@@ -4,6 +4,7 @@ import { createTheme, ThemeProvider } from '@mui/material/styles';
 import './styles/App.css';
 import Form from './cmp/form';
 import SignIn from './cmp/signin';
+import ResetPassword from './cmp/resetPassword'; // Import ResetPassword component
 
 const theme = createTheme({
   palette: {
@@ -16,6 +17,20 @@ const theme = createTheme({
 function App() {
   const [isStaff, setIsStaff] = useState(false);
   const handleStaffChange = () => setIsStaff(!isStaff);
+
+  const searchParams = new URLSearchParams(window.location.search);
+  const token = searchParams.get('token');
+
+  let componentToRender;
+
+  if (token) {
+    componentToRender = <ResetPassword token={token} />;
+  } else if (isStaff) {
+    componentToRender = <SignIn />;
+  } else {
+    componentToRender = <Form />;
+  }
+
   return (
     <>
       <head>
@@ -39,7 +54,7 @@ function App() {
               Login
             </Button>
           </div>
-          {isStaff ? <SignIn /> : <Form />}
+          {componentToRender}
         </main>
       </ThemeProvider>
     </>
