@@ -120,6 +120,7 @@ function TextField(props: OnePirateTextFieldProps) {
         shrink: true,
       }}
       SelectProps={SelectProps}
+        // eslint-disable-next-line
       {...other}
     />
   );

@@ -90,10 +90,11 @@ function Typography<C extends React.ElementType>(
   }
 
   return (
-    <MuiTypography variantMapping={variantMapping} variant={variant} {...other}>
-      {children}
-      {markedClassName ? <span className={markedClassName} /> : null}
-    </MuiTypography>
+      // eslint-disable-next-line
+      <MuiTypography variantMapping={variantMapping} variant={variant} {...other}>
+        {children}
+        {markedClassName ? <span className={markedClassName} /> : null}
+      </MuiTypography>
   );
 }
 

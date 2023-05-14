@@ -32,9 +32,10 @@ function FormFeedback(
   } = props;
 
   return (
-    <BoxStyled error={error} success={success} className={className} {...others}>
-      <Typography color="inherit">{children}</Typography>
-    </BoxStyled>
+      // eslint-disable-next-line
+      <BoxStyled error={error} success={success} className={className} {...others}>
+        <Typography color="inherit">{children}</Typography>
+      </BoxStyled>
   );
 }
 

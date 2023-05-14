@@ -18,15 +18,16 @@ import ForgotPassword from './ForgotPassword'; // Import the ForgotPassword comp
 
 function Copyright(props: any) {
   return (
-    <Typography variant="body2" color="text.secondary" align="center" {...props}>
-      {'Copyright © '}
-      <Link color="inherit" href="https://urepair.me/">
-        URepair
-      </Link>
-      {' '}
-      {new Date().getFullYear()}
-      .
-    </Typography>
+      // eslint-disable-next-line
+      <Typography variant="body2" color="text.secondary" align="center" {...props}>
+        {'Copyright © '}
+        <Link color="inherit" href="https://urepair.me/">
+          URepair
+        </Link>
+        {' '}
+        {new Date().getFullYear()}
+        .
+      </Typography>
   );
 }
 
