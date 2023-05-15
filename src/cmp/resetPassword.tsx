@@ -5,6 +5,7 @@ import Typography from './modules/components/Typography';
 import RFTextField from './modules/form/RFTextField';
 import FormButton from './modules/form/FormButton';
 import FormFeedback from './modules/form/FormFeedback';
+import withRoot from './modules/withRoot';
 
 interface ResetPasswordProps {
   token: string;
@@ -106,5 +107,8 @@ function ResetPassword({ token }: ResetPasswordProps) {
     </>
   );
 }
-
-export default ResetPassword;
+// @ts-ignore
+function ResetPasswordWithRoot(props) {
+  return <ResetPassword {...props} />;
+}
+export default withRoot(ResetPasswordWithRoot);

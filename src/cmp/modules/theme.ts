@@ -1,26 +1,26 @@
 import { createTheme } from '@mui/material/styles';
-import { green, grey, red } from '@mui/material/colors';
+import { green, grey } from '@mui/material/colors';
 
 const rawTheme = createTheme({
   palette: {
     primary: {
-      light: '#69696a',
-      main: '#28282a',
-      dark: '#1e1e1f',
+      light: '#B33968',
+      main: '#880E4F',
+      dark: '#600032',
     },
     secondary: {
-      light: '#fff5f8',
-      main: '#ff3366',
-      dark: '#e62958',
+      light: '#a21b1b',
+      main: '#881C1C',
+      dark: '#601414',
     },
     warning: {
       main: '#ffc071',
       dark: '#ffb25e',
     },
     error: {
-      light: red[50],
-      main: red[500],
-      dark: red[700],
+      light: '#fdecea',
+      main: '#f44336',
+      dark: '#e57373',
     },
     success: {
       light: green[50],
