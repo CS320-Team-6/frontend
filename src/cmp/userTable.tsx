@@ -1,10 +1,9 @@
 import * as React from 'react';
 import { alpha } from '@mui/material/styles';
-import CheckIcon from '@mui/icons-material/Check';
+// import CheckIcon from '@mui/icons-material/Check';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import FilterListIcon from '@mui/icons-material/FilterList';
-import MergeIcon from '@mui/icons-material/Merge';
 import {
   Box,
   Button,
@@ -20,7 +19,7 @@ import {
   InputLabel,
   MenuItem,
   Paper,
-  Select,
+  Select, SelectChangeEvent,
   Switch,
   Table,
   TableBody,
@@ -41,7 +40,7 @@ import { User } from './interfaces/user';
 interface TableProps {
   issues: User[];
   URL: string;
-  getData: () => Promise<void>;
+  getData: () => Promise<User[]>;
 }
 
 function descendingComparator<T>(a: T, b: T, orderBy: keyof T) {
@@ -54,9 +53,9 @@ function descendingComparator<T>(a: T, b: T, orderBy: keyof T) {
       return 1;
     }
   }
-  // if orderBy "status" order in the following way ["CLOSED", "RESOLVED", "IN_PROGRESS", "NEW"]
-  if (orderBy === 'status') {
-    const statusOrder = ['CLOSED', 'RESOLVED', 'IN_PROGRESS', 'NEW'];
+  // if orderBy "role" order in the following way ["STAFF", "STUDENT"]
+  if (orderBy === 'role') {
+    const statusOrder = ['STAFF', 'STUDENT'];
     if (statusOrder.indexOf(String(b[orderBy])) < statusOrder.indexOf(String(a[orderBy]))) {
       return -1;
     }
@@ -64,28 +63,15 @@ function descendingComparator<T>(a: T, b: T, orderBy: keyof T) {
       return 1;
     }
   }
-  // if orderBy "priority" order in the following way ["LOW", "MEDIUM", "HIGH", "URGENT"]
-  if (orderBy === 'priority') {
-    const priorityOrder = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'];
-    if (priorityOrder.indexOf(String(b[orderBy])) < priorityOrder.indexOf(String(a[orderBy]))) {
+  // If orderBy is "firstName" or "lastName," order alphabetically
+  if (orderBy === 'firstName' || orderBy === 'lastName') {
+    if (String(b[orderBy]).toLowerCase() < String(a[orderBy]).toLowerCase()) {
       return -1;
     }
-    if (priorityOrder.indexOf(String(b[orderBy])) > priorityOrder.indexOf(String(a[orderBy]))) {
+    if (String(b[orderBy]).toLowerCase() > String(a[orderBy]).toLowerCase()) {
       return 1;
     }
   }
-  // if orderBy "dateReported" order by date
-  if (orderBy === 'dateReported' || orderBy === 'dateResolved') {
-    // @ts-ignore
-    if (compareDate(b[orderBy], a[orderBy]) < 0) {
-      return -1;
-    }
-    // @ts-ignore
-    if (compareDate(b[orderBy], a[orderBy]) > 0) {
-      return 1;
-    }
-  }
-
   return 0;
 }
 
@@ -108,15 +94,7 @@ function getComparator<Key extends keyof any>(
 // only support modern browsers you can replace stableSort(exampleArray, exampleComparator)
 // with exampleArray.slice().sort(exampleComparator)
 function stableSort<T>(array: readonly T[], comparator: (a: T, b: T) => number) {
-  const stabilizedThis = array.map((el, index) => [el, index] as [T, number]);
-  stabilizedThis.sort((a, b) => {
-    const order = comparator(a[0], b[0]);
-    if (order !== 0) {
-      return order;
-    }
-    return a[1] - b[1];
-  });
-  return stabilizedThis.map((el) => el[0]);
+  return array.slice().sort(comparator);
 }
 
 interface HeadCell {
@@ -184,7 +162,7 @@ function EnhancedTableHead(props: EnhancedTableProps) {
             checked={rowCount > 0 && numSelected === rowCount}
             onChange={onSelectAllClick}
             inputProps={{
-              'aria-label': 'select all issues',
+              'aria-label': 'select all users',
             }}
           />
         </TableCell>
@@ -216,15 +194,13 @@ function EnhancedTableHead(props: EnhancedTableProps) {
 
 interface EnhancedTableToolbarProps {
   numSelected: number;
-  handleResolve: () => void;
-  handleMerge: () => void;
   handleDelete: () => void;
   handleEdit: () => void;
 }
 
 function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
   const {
-    numSelected, handleResolve, handleMerge, handleDelete, handleEdit,
+    numSelected, handleDelete, handleEdit,
   } = props;
 
   return (
@@ -268,26 +244,12 @@ function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
           </IconButton>
         </Tooltip>
       ) : null}
-      {numSelected > 1 ? (
-        <Tooltip title="Merge">
-          <IconButton onClick={handleMerge}>
-            <MergeIcon />
+      {numSelected > 0 ? (
+        <Tooltip title="Delete">
+          <IconButton onClick={handleDelete}>
+            <DeleteIcon />
           </IconButton>
         </Tooltip>
-      ) : null}
-      {numSelected > 0 ? (
-        <>
-          <Tooltip title="Resolve">
-            <IconButton onClick={handleResolve}>
-              <CheckIcon />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Delete">
-            <IconButton onClick={handleDelete}>
-              <DeleteIcon />
-            </IconButton>
-          </Tooltip>
-        </>
       ) : (
         <Tooltip title="Filter list">
           <IconButton>
@@ -310,13 +272,10 @@ export default function EnhancedUserTable(props: TableProps) {
   const [visibleRows, setVisibleRows] = React.useState<User[] | null>(null);
   const [rowsPerPage, setRowsPerPage] = React.useState(DEFAULT_ROWS_PER_PAGE);
   const [paddingHeight, setPaddingHeight] = React.useState(0);
-  const [resolveDetailOpen, setResolveDetailOpen] = React.useState(false);
-  const [resolveDetails, setResolveDetails] = React.useState('');
   const [editOpen, setEditOpen] = React.useState(false);
-  const [editAssignedTo, setEditAssignedTo] = React.useState('');
-  const [editNotes, setEditNotes] = React.useState('');
-  const [editStatus, setEditStatus] = React.useState('');
-  const [editPriority, setEditPriority] = React.useState('');
+  const [editFirstName, setEditFirstName] = React.useState('');
+  const [editLastName, setEditLastName] = React.useState('');
+  const [editRole, setEditRole] = React.useState('');
   const [selectedRow, setSelectedRow] = React.useState<string>('');
 
   React.useEffect(() => {
@@ -325,19 +284,24 @@ export default function EnhancedUserTable(props: TableProps) {
       getComparator(DEFAULT_ORDER, DEFAULT_ORDER_BY),
     );
     rowsOnMount = rowsOnMount.slice(
-      0 * DEFAULT_ROWS_PER_PAGE,
-      0 * DEFAULT_ROWS_PER_PAGE + DEFAULT_ROWS_PER_PAGE,
+      0,
+      DEFAULT_ROWS_PER_PAGE,
     );
 
-    setVisibleRows(rowsOnMount);
+    setVisibleRows(rowsOnMount as User[] | null);
   }, []);
 
   const handleRequestSort = React.useCallback(
     (event: React.MouseEvent<unknown>, newOrderBy: keyof User) => {
       const isAsc = orderBy === newOrderBy && order === 'asc';
-      /* eslint-disable no-nested-ternary */
-      const toggledOrder = orderBy !== newOrderBy ? 'desc' : isAsc ? 'desc' : 'asc';
-      setOrder(toggledOrder);
+      let toggledOrder: Order;
+      if (orderBy !== newOrderBy) {
+        toggledOrder = 'desc';
+      } else if (isAsc) {
+        toggledOrder = 'desc';
+      } else {
+        toggledOrder = 'asc';
+      } setOrder(toggledOrder);
       setOrderBy(newOrderBy);
 
       const sortedRows = stableSort(rows, getComparator(toggledOrder, newOrderBy));
@@ -353,7 +317,7 @@ export default function EnhancedUserTable(props: TableProps) {
         page * rowsPerPage,
         page * rowsPerPage + rowsPerPage,
       );
-      setVisibleRows(updatedRows);
+      setVisibleRows(updatedRows as | User[] | null);
     },
     [order, orderBy, page, rowsPerPage],
   );
@@ -361,7 +325,6 @@ export default function EnhancedUserTable(props: TableProps) {
   const handleSelectAllClick = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.checked) {
       const newSelected = rows.map((n) => n.email);
-      // @ts-ignore
       setSelected(newSelected);
       return;
     }
@@ -379,7 +342,7 @@ export default function EnhancedUserTable(props: TableProps) {
     }
 
     if (selectedIndex === -1) {
-      newSelected = newSelected.concat(selected, name);
+      newSelected = newSelected.concat(selected, [name]);
     } else if (selectedIndex === 0) {
       newSelected = newSelected.concat(selected.slice(1));
     } else if (selectedIndex === selected.length - 1) {
@@ -390,7 +353,6 @@ export default function EnhancedUserTable(props: TableProps) {
         selected.slice(selectedIndex + 1),
       );
     }
-
     setSelected(newSelected);
   };
 
@@ -403,7 +365,7 @@ export default function EnhancedUserTable(props: TableProps) {
         newPage * rowsPerPage,
         newPage * rowsPerPage + rowsPerPage,
       );
-      setVisibleRows(updatedRows);
+      setVisibleRows(updatedRows as User[] | null);
 
       // Avoid a layout jump when reaching the last page with empty rows.
       const numEmptyRows = newPage > 0 ? Math.max(0, (1 + newPage) * rowsPerPage - rows.length) : 0;
@@ -423,10 +385,10 @@ export default function EnhancedUserTable(props: TableProps) {
 
       const sortedRows = stableSort(rows, getComparator(order, orderBy));
       const updatedRows = sortedRows.slice(
-        0 * updatedRowsPerPage,
-        0 * updatedRowsPerPage + updatedRowsPerPage,
+        0,
+        updatedRowsPerPage,
       );
-      setVisibleRows(updatedRows);
+      setVisibleRows(updatedRows as User[] | null);
 
       // There is no layout jump to handle on the first page.
       setPaddingHeight(0);
@@ -440,145 +402,18 @@ export default function EnhancedUserTable(props: TableProps) {
 
   const isSelected = (name: string) => selected.indexOf(name) !== -1;
 
-  // Resolves the selected issues
-  async function resolveIssues(selected_issues: any[]) {
-    /* eslint-disable no-await-in-loop */
-    /* eslint-disable no-restricted-syntax */
-    for (const issue of selected_issues) {
-      const resFetch = await fetch(`${URL}/${issue}`, { credentials: 'include' });
-      const resFetchJSON = await resFetch.json();
-      resFetchJSON.status = 'RESOLVED';
-      resFetchJSON.resolutionDetails = resolveDetails;
-      const date = new Date();
-      resFetchJSON.dateResolved = {
-        year: date.getFullYear(),
-        month: date.getMonth() + 1, // add 1 because getMonth() returns 0-based index
-        day: date.getDate(),
-        hour: date.getHours(),
-        minute: date.getMinutes(),
-      };
-      const requestOptions = {
-        method: 'POST',
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify(resFetchJSON),
-      };
-      // @ts-ignore
-      await fetch(`${URL}/${issue}`, requestOptions);
-    }
-  }
-
-  // Add this function inside the EnhancedTable component
-  const handleBatchResolve = async () => {
-    setResolveDetailOpen(false);
-    // @ts-ignore
-    await resolveIssues(selected); // Add await keyword here
-    // Call getData to refresh the data in the parent component
-    const data = await getData();
-
-    setSelected([]);
-    // update the rows in the table
-    // @ts-ignore
-    setRows(data);
-    setResolveDetails('');
-  };
-
-  const handleResolve = () => {
-    setResolveDetailOpen(true);
-  };
-
   const handleDelete = async () => {
-    // delete selected issues
-    await Promise.all(selected.map(async (issue) => {
-      const requestOptions = {
+    // delete selected users
+    await Promise.all(selected.map(async (user) => {
+      await fetch(`${URL}/${user}`, {
         method: 'DELETE',
         credentials: 'include',
-      };
-      // @ts-ignore
-      await fetch(`${URL}/${issue}`, requestOptions);
+      });
     }));
     // Call getData to refresh the data in the parent component
     const data = await getData();
     setSelected([]);
     // update the rows in the table
-    // @ts-ignore
-    setRows(data);
-  };
-
-  const handleMerge = async () => {
-    // check that there are at least 2 issues selected
-    if (selected.length < 2) {
-      alert('Please select at least 2 issues to merge.');
-      return;
-    }
-    // check that all selected issues have the same equipmentID
-    const selectedIssues = await Promise.all(selected.map(async (issue) => {
-      const resFetch = await fetch(`${URL}/${issue}`, { credentials: 'include' });
-      const resFetchJSON = await resFetch.json();
-      return resFetchJSON;
-    }));
-    const equipmentIDs = selectedIssues.map((issue) => issue.equipmentId);
-    // @ts-ignore
-    const uniqueEquipmentIDs = [...new Set(equipmentIDs)];
-    // console.log(uniqueEquipmentIDs);
-    if (uniqueEquipmentIDs.length > 1) {
-      alert('Please select issues with the same equipmentID to merge.');
-      return;
-    }
-    // create a new issue with the same equipmentID
-    const priorityOrder = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'];
-    const priorities = selectedIssues.map((issue) => issue.priority);
-    /* eslint-disable-next-line max-len */
-    const maxPriority = priorities.reduce((a, b) => (priorityOrder.indexOf(a) > priorityOrder.indexOf(b) ? a : b));
-    const mergedDescription = selectedIssues.map((issue) => issue.description).join('\n');
-    const date = new Date();
-    const newIssue = {
-      id: 1,
-      equipmentId: uniqueEquipmentIDs[0],
-      status: 'NEW',
-      dateReported: {
-        year: date.getFullYear(),
-        month: date.getMonth() + 1, // add 1 because getMonth() returns 0-based index
-        day: date.getDate(),
-        hour: date.getHours(),
-        minute: date.getMinutes(),
-      },
-      priority: maxPriority,
-      description: mergedDescription,
-      assignedTo: null,
-      dateResolved: null,
-      resolutionDetails: null,
-      notes: null,
-    };
-    // create the new issue
-    const requestOptions = {
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include',
-      body: JSON.stringify(newIssue),
-    };
-    // @ts-ignore
-    await fetch(URL, requestOptions);
-    // delete the old issues
-    await Promise.all(selected.map(async (issue) => {
-      const requestOptionsDelete = {
-        method: 'DELETE',
-        credentials: 'include',
-      };
-      // @ts-ignore
-      await fetch(`${URL}/${issue}`, requestOptionsDelete);
-    }));
-    const data = await getData();
-
-    setSelected([]);
-    // update the rows in the table
-    // @ts-ignore
     setRows(data);
   };
 
@@ -589,139 +424,88 @@ export default function EnhancedUserTable(props: TableProps) {
       page * rowsPerPage,
       page * rowsPerPage + rowsPerPage,
     );
-    setVisibleRows(updatedRows);
+    setVisibleRows(updatedRows as User[] | null);
   }, [rows]);
-
-  const handleDetailChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setResolveDetails(event.target.value);
-  };
 
   const handleEdit = () => {
     // set the default values for the edit form
-    // @ts-ignore
-    const selectedIssue = rows.find((issue) => issue.id === selected[0]);
-    // @ts-ignore
-    if (selectedIssue.asignedTo === null) {
-      // @ts-ignore
-      setEditAssignedTo('NULL');
-    } else {
-      // @ts-ignore
-      setEditAssignedTo(selectedIssue.assignedTo);
-    }
-    // @ts-ignore
-    setEditNotes(selectedIssue.notes);
-    // @ts-ignore
-    setEditStatus(selectedIssue.status);
-    // @ts-ignore
-    setEditPriority(selectedIssue.priority);
+    const selectedUser = rows.find((user) => user.email === selected[0]) as User;
+    setEditFirstName(selectedUser.firstName);
+    setEditLastName(selectedUser.lastName);
+    setEditRole(selectedUser.role);
     setEditOpen(true);
   };
 
-  /* eslint-disable-next-line max-len */
-  const editIssue = async (id: number, assignedTo: number, notes: string, status: string, priority: string) => {
-    const resFetch = await fetch(`${URL}/${id}`, { credentials: 'include' });
+  const editUser = async (firstName: string, lastName: string, email: string, role: string) => {
+    const resFetch = await fetch(`${URL}/${email}`, { credentials: 'include' });
     const resFetchJSON = await resFetch.json();
-    // @ts-ignore
-    if (assignedTo === 'NULL') {
-      resFetchJSON.assignedTo = null;
-    } else {
-      resFetchJSON.assignedTo = assignedTo;
-    }
-    resFetchJSON.notes = notes;
-    resFetchJSON.status = status;
-    resFetchJSON.priority = priority;
-    const requestOptions = {
+    resFetchJSON.firstName = firstName;
+    resFetchJSON.lastName = lastName;
+    resFetchJSON.email = email;
+    resFetchJSON.role = role;
+    await fetch(`${URL}/${email}`, {
       method: 'POST',
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',
       },
       credentials: 'include',
-      // @ts-ignore
       body: JSON.stringify(resFetchJSON),
-    };
-    // @ts-ignore
-    await fetch(`${URL}/${id}`, requestOptions);
+    });
   };
 
   const handleEditSubmit = async () => {
     setEditOpen(false);
-    // @ts-ignore
-    await editIssue(selected[0], editAssignedTo, editNotes, editStatus, editPriority);
+    await editUser(editFirstName, editLastName, selected[0], editRole);
     // Call getData to refresh the data in the parent component
     const data = await getData();
     setSelected([]);
     // update the rows in the table
-    // @ts-ignore
     setRows(data);
-    setEditAssignedTo('');
-    setEditNotes('');
-    setEditStatus('');
-    setEditPriority('');
+    setEditFirstName('');
+    setEditLastName('');
+    setEditRole('');
   };
 
-  /* eslint-disable max-len */
   return (
     <Box sx={{ width: '100%' }}>
       <Paper sx={{ width: '100%', mb: 2 }}>
-        <EnhancedTableToolbar numSelected={selected.length} handleResolve={handleResolve} handleMerge={handleMerge} handleDelete={handleDelete} handleEdit={handleEdit} />
-        <Dialog open={resolveDetailOpen} PaperProps={{ sx: { width: '60%' } }}>
-          <DialogTitle>Resolution Details</DialogTitle>
-          <DialogContent>
-            <TextField
-              label="Enter Details"
-              multiline
-              rows={6}
-              variant="standard"
-              fullWidth
-              value={resolveDetails}
-              onChange={handleDetailChange}
-            />
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setResolveDetailOpen(false)}>Cancel</Button>
-            <Button onClick={handleBatchResolve}>Resolve</Button>
-          </DialogActions>
-        </Dialog>
+        <EnhancedTableToolbar
+          numSelected={selected.length}
+          handleDelete={handleDelete}
+          handleEdit={handleEdit}
+        />
         <Dialog open={editOpen} PaperProps={{ sx: { width: '60%' } }}>
-          <DialogTitle>Edit Issue</DialogTitle>
+          <DialogTitle>Edit User</DialogTitle>
           <Box sx={{ width: '100%', height: '8px' }} />
           <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <TextField
-              label="Notes"
+              label="FirstName"
               multiline
               rows={6}
               variant="outlined"
-              value={editNotes}
-              onChange={(e) => setEditNotes(e.target.value)}
+              value={editFirstName}
+              onChange={(e) => setEditFirstName(e.target.value)}
+            />
+            <TextField
+              label="LastName"
+              multiline
+              rows={6}
+              variant="outlined"
+              value={editLastName}
+              onChange={(e) => setEditLastName(e.target.value)}
             />
             <FormControl variant="outlined" fullWidth>
-              <InputLabel id="status-select-label">Status</InputLabel>
+              <InputLabel id="role-select-label">Role</InputLabel>
               <Select
-                labelId="status-select-label"
-                id="status-select"
-                value={editStatus}
+                labelId="role-select-label"
+                id="role-select"
+                value={editRole}
                 label="Status"
-                onChange={(e) => setEditStatus(e.target.value)}
+                onChange={(e:SelectChangeEvent) => setEditRole(e.target.value)}
               >
-                <MenuItem value="NEW">New</MenuItem>
-                <MenuItem value="IN_PROGRESS">In Progress</MenuItem>
-                <MenuItem value="RESOLVED">Resolved</MenuItem>
-              </Select>
-            </FormControl>
-            <FormControl variant="outlined" fullWidth>
-              <InputLabel id="priority-select-label">Priority</InputLabel>
-              <Select
-                labelId="priority-select-label"
-                id="priority-select"
-                value={editPriority}
-                label="Priority"
-                onChange={(e) => setEditPriority(e.target.value)}
-              >
-                <MenuItem value="LOW">Low</MenuItem>
-                <MenuItem value="MEDIUM">Medium</MenuItem>
-                <MenuItem value="HIGH">High</MenuItem>
-                <MenuItem value="URGENT">Urgent</MenuItem>
+                <MenuItem value="STAFF">Staff</MenuItem>
+                <MenuItem value="STUDENT">Student</MenuItem>
               </Select>
             </FormControl>
           </DialogContent>
@@ -749,17 +533,15 @@ export default function EnhancedUserTable(props: TableProps) {
             <TableBody>
               {visibleRows
                 ? visibleRows.map((row, index) => {
-                  // @ts-ignore
-                  const isItemSelected = isSelected(row.id);
+                  const isItemSelected = isSelected(row.email);
                   const labelId = `enhanced-table-checkbox-${index}`;
-                  // @ts-ignore
-                  const isOpen = selectedRow === row.id;
+                  const isOpen = selectedRow === row.email;
 
                   return (
                     <React.Fragment key={row.lastName}>
                       <TableRow
                         hover
-                        onClick={(event) => handleClick(event, row.lastName as unknown as string)}
+                        onClick={(event) => handleClick(event, row.email as unknown as string)}
                         role="checkbox"
                         aria-checked={isItemSelected}
                         tabIndex={-1}

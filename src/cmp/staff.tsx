@@ -93,18 +93,10 @@ export default function Staff() {
   const getUsers = async () => {
     const res = await fetch(`${URL}/user`, { credentials: 'include' });
     const resJSON = await res.json() as UserResponse;
-    resJSON.user_table.sort((a: User, b: User) => {
-      if (a.lastName < b.lastName) {
-        return -1;
-      }
-      if (a.lastName > b.lastName) {
-        return 1;
-      }
-      return 0;
-    });
     setUsers(resJSON.user_table);
     setHasUsers(true);
     setActiveTable('users');
+    return Promise.resolve(resJSON.user_table); // what does this do?
   };
 
   return (
