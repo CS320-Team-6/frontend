@@ -1,7 +1,7 @@
 export interface DateInfo {
-  year: number;
-  month: number;
-  day: number;
+  year: number | undefined;
+  month: number | undefined;
+  day: number | undefined;
 }
 
 export interface Equipment {

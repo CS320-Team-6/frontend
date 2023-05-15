@@ -1,4 +1,5 @@
 import * as React from 'react';
+import dayjs from 'dayjs';
 import { alpha } from '@mui/material/styles';
 // import CheckIcon from '@mui/icons-material/Check';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -30,6 +31,7 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
+import { DatePicker } from '@mui/x-date-pickers';
 import { visuallyHidden } from '@mui/utils';
 import { Equipment, DateInfo } from './interfaces/equipment.js';
 
@@ -55,8 +57,8 @@ function getComparator<Key extends keyof any>(
   order: Order,
   orderBy: Key,
 ): (
-    a: { [key in Key]: number | string | null },
-    b: { [key in Key]: number | string | null },
+    a: { [key in Key]: number | string | DateInfo | null },
+    b: { [key in Key]: number | string | DateInfo | null },
   ) => number {
   return order === 'desc'
     ? (a, b) => descendingComparator(a, b, orderBy)
@@ -248,7 +250,7 @@ export default function EnhancedUserTable(props: TableProps) {
   const [paddingHeight, setPaddingHeight] = React.useState(0);
   const [editOpen, setEditOpen] = React.useState(false);
   const [editName, setEditName] = React.useState('');
-  const [editLastMaintenanceDate, setEditLastMaintenanceDate] = React.useState('');
+  const [editLastMaintenanceDate, setEditLastMaintenanceDate] = React.useState<DateInfo>();
   const [editLocation, setEditLocation] = React.useState('');
   const [selectedRow, setSelectedRow] = React.useState<number>(-1);
 
@@ -405,7 +407,7 @@ export default function EnhancedUserTable(props: TableProps) {
     // set the default values for the edit form
     const selectedEquipment = rows.find((eq) => eq.id === selected[0]) as Equipment;
     setEditName(selectedEquipment.name);
-    setEditLastMaintenanceDate(JSON.stringify(selectedEquipment.lastMaintenanceDate));
+    setEditLastMaintenanceDate(selectedEquipment.lastMaintenanceDate);
     setEditLocation(selectedEquipment.location);
     setEditOpen(true);
   };
@@ -413,8 +415,8 @@ export default function EnhancedUserTable(props: TableProps) {
   const editEquipment = async (
     id: number,
     name: string,
-    lastMaintenanceDate: DateInfo,
     location: string,
+    lastMaintenanceDate?: DateInfo,
   ) => {
     const resFetch = await fetch(`${URL}/${id}`, { credentials: 'include' });
     const resFetchJSON = await resFetch.json();
@@ -434,14 +436,14 @@ export default function EnhancedUserTable(props: TableProps) {
 
   const handleEditSubmit = async () => {
     setEditOpen(false);
-    await editEquipment(selected[0], editName, editLastMaintenanceDate, editLocation);
+    await editEquipment(selected[0], editName, editLocation, editLastMaintenanceDate);
     // Call getData to refresh the data in the parent component
     const data = await getData();
     setSelected([]);
     // update the rows in the table
     setRows(data);
     setEditName('');
-    setEditLastMaintenanceDate('');
+    setEditLastMaintenanceDate(undefined);
     setEditLocation('');
   };
 
@@ -465,20 +467,21 @@ export default function EnhancedUserTable(props: TableProps) {
               value={editName}
               onChange={(e) => setEditName(e.target.value)}
             />
-            <TextField
-              label="Last Date Maintained"
-              multiline
-              rows={6}
-              variant="outlined"
-              value={setEditLastMaintenanceDate}
-              onChange={(e) => setEditLastMaintenanceDate(e.target.value)}
+            <DatePicker
+              label="Last Maintenance Date"
+              value={dayjs(`${editLastMaintenanceDate?.year}-${editLastMaintenanceDate?.month}-${editLastMaintenanceDate?.day}`)}
+              onChange={(newValue) => setEditLastMaintenanceDate({
+                day: newValue?.day(),
+                month: newValue?.month(),
+                year: newValue?.year(),
+              })}
             />
             <TextField
               label="Location"
               multiline
               rows={6}
               variant="outlined"
-              value={setEditLocation}
+              value={editLocation}
               onChange={(e) => setEditLocation(e.target.value)}
             />
           </DialogContent>
