@@ -477,7 +477,6 @@ export default function EnhancedTable(props: TableProps) {
         selected.slice(selectedIndex + 1),
       );
     }
-
     setSelected(newSelected);
   };
 
@@ -601,7 +600,6 @@ export default function EnhancedTable(props: TableProps) {
     }));
     const equipmentIDs = selectedIssues.map((issue) => issue.equipmentId);
     const uniqueEquipmentIDs = Array.from(new Set(equipmentIDs));
-    console.log(uniqueEquipmentIDs);
     if (uniqueEquipmentIDs.length > 1) {
       alert('Please select issues with the same equipmentID to merge.');
       return;
@@ -683,7 +681,7 @@ export default function EnhancedTable(props: TableProps) {
       fetchedUsers.unshift({ email: 'NULL', name: 'Unassigned' });
       setUsers(fetchedUsers);
     }
-    fetchUsers().then(() => console.log('fetched users'));
+    fetchUsers().then();
   }, []);
 
   const handleEdit = () => {
@@ -862,7 +860,9 @@ export default function EnhancedTable(props: TableProps) {
                     <React.Fragment key={row.id}>
                       <TableRow
                         hover
-                        onClick={(event) => handleClick(event, row.id as unknown as string)}
+                        onClick={(event) => {
+                          handleClick(event, row.id.toString() as unknown as string);
+                        }}
                         role="checkbox"
                         aria-checked={isItemSelected}
                         tabIndex={-1}

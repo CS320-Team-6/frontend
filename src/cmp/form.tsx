@@ -111,7 +111,6 @@ export default function Form() {
       try {
         const res = await fetch(`${URL}equipment`);
         const resJSON = await res.json() as EquipmentResponse;
-        console.log(resJSON);
         setEquipment(resJSON.equipment_table);
       } catch (error) {
         // Handle any errors that occur during the fetch request

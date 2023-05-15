@@ -31,9 +31,8 @@ function ResetPassword({ token }: ResetPasswordProps) {
         }
         return response.json();
       })
-      .then((data) => {
+      .then(() => {
         setRequestStatus('success');
-        console.log(data);
       })
       .catch((err) => {
         setRequestStatus('failure');

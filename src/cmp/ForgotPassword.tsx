@@ -47,10 +47,7 @@ function ForgotPassword() {
         setRequestStatus('success');
         return response.json();
       })
-      .then((data) => {
-        // Handle response here. This could involve setting state or redirecting the user.
-        console.log(data);
-      })
+      .then()
       .catch((error) => {
         // Handle the error here.
         setRequestStatus('failure');
