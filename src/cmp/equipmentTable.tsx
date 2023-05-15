@@ -13,13 +13,9 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  FormControl,
   FormControlLabel,
   IconButton,
-  InputLabel,
-  MenuItem,
   Paper,
-  Select, SelectChangeEvent,
   Switch,
   Table,
   TableBody,
@@ -44,7 +40,12 @@ interface TableProps {
 }
 
 function descendingComparator<T>(a: T, b: T, orderBy: keyof T) {
-  // TODO: Write this
+  if (b[orderBy] < a[orderBy]) {
+    return -1;
+  }
+  if (b[orderBy] > a[orderBy]) {
+    return 1;
+  }
   return 0;
 }
 
@@ -66,7 +67,7 @@ function getComparator<Key extends keyof any>(
 // stableSort() brings sort stability to non-modern browsers (notably IE11). If you
 // only support modern browsers you can replace stableSort(exampleArray, exampleComparator)
 // with exampleArray.slice().sort(exampleComparator)
-function stableSort<T>(array: readonly T[], comparator: (a: T, b: T) => number) {
+function stableSort<T>(array: readonly T[], comparator: (a: T, b: T) => number): T[] {
   return array.slice().sort(comparator);
 }
 
@@ -104,7 +105,7 @@ const headCells: readonly HeadCell[] = [
   },
 ];
 
-const DEFAULT_ORDER = 'desc';
+const DEFAULT_ORDER = 'asc';
 const DEFAULT_ORDER_BY = 'id';
 const DEFAULT_ROWS_PER_PAGE = 10;
 
@@ -239,7 +240,7 @@ export default function EnhancedUserTable(props: TableProps) {
   const [rows, setRows] = React.useState<Equipment[]>(equipment);
   const [order, setOrder] = React.useState<Order>(DEFAULT_ORDER);
   const [orderBy, setOrderBy] = React.useState<keyof Equipment>(DEFAULT_ORDER_BY);
-  const [selected, setSelected] = React.useState<readonly string[]>([]);
+  const [selected, setSelected] = React.useState<readonly number[]>([]);
   const [page, setPage] = React.useState(0);
   const [dense, setDense] = React.useState(true);
   const [visibleRows, setVisibleRows] = React.useState<Equipment[] | null>(null);
@@ -249,7 +250,7 @@ export default function EnhancedUserTable(props: TableProps) {
   const [editName, setEditName] = React.useState('');
   const [editLastMaintenanceDate, setEditLastMaintenanceDate] = React.useState('');
   const [editLocation, setEditLocation] = React.useState('');
-  const [selectedRow, setSelectedRow] = React.useState<string>('');
+  const [selectedRow, setSelectedRow] = React.useState<number>(-1);
 
   React.useEffect(() => {
     let rowsOnMount = stableSort(
@@ -297,25 +298,25 @@ export default function EnhancedUserTable(props: TableProps) {
 
   const handleSelectAllClick = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.checked) {
-      const newSelected = rows.map((n) => n.name);
+      const newSelected = rows.map((n) => n.id);
       setSelected(newSelected);
       return;
     }
     setSelected([]);
   };
 
-  const handleClick = (event: React.MouseEvent<unknown>, name: string) => {
-    const selectedIndex = selected.indexOf(name);
-    let newSelected: readonly string[] = [];
+  const handleClick = (event: React.MouseEvent<unknown>, id: number) => {
+    const selectedIndex = selected.indexOf(id);
+    let newSelected: readonly number[] = [];
 
-    if (selectedRow === name) {
-      setSelectedRow('');
+    if (selectedRow === id) {
+      setSelectedRow(-1);
     } else {
-      setSelectedRow(name);
+      setSelectedRow(id);
     }
 
     if (selectedIndex === -1) {
-      newSelected = newSelected.concat(selected, [name]);
+      newSelected = newSelected.concat(selected, [id]);
     } else if (selectedIndex === 0) {
       newSelected = newSelected.concat(selected.slice(1));
     } else if (selectedIndex === selected.length - 1) {
@@ -373,7 +374,7 @@ export default function EnhancedUserTable(props: TableProps) {
     setDense(event.target.checked);
   };
 
-  const isSelected = (name: string) => selected.indexOf(name) !== -1;
+  const isSelected = (id: number) => selected.indexOf(id) !== -1;
 
   const handleDelete = async () => {
     // delete selected equipment
@@ -402,14 +403,19 @@ export default function EnhancedUserTable(props: TableProps) {
 
   const handleEdit = () => {
     // set the default values for the edit form
-    const selectedEquipment = rows.find((equipment) => equipment.name === selected[0]) as Equipment;
+    const selectedEquipment = rows.find((eq) => eq.id === selected[0]) as Equipment;
     setEditName(selectedEquipment.name);
-    setEditLastMaintenanceDate(selectedEquipment.lastMaintenanceDate);
+    setEditLastMaintenanceDate(JSON.stringify(selectedEquipment.lastMaintenanceDate));
     setEditLocation(selectedEquipment.location);
     setEditOpen(true);
   };
 
-  const editEquipment = async (id: string, name: string, lastMaintenanceDate: DateInfo, location: string) => {
+  const editEquipment = async (
+    id: number,
+    name: string,
+    lastMaintenanceDate: DateInfo,
+    location: string,
+  ) => {
     const resFetch = await fetch(`${URL}/${id}`, { credentials: 'include' });
     const resFetchJSON = await resFetch.json();
     resFetchJSON.name = name;
@@ -500,15 +506,15 @@ export default function EnhancedUserTable(props: TableProps) {
             <TableBody>
               {visibleRows
                 ? visibleRows.map((row, index) => {
-                  const isItemSelected = isSelected(row.name);
+                  const isItemSelected = isSelected(row.id);
                   const labelId = `enhanced-table-checkbox-${index}`;
-                  const isOpen = selectedRow === row.name;
+                  const isOpen = selectedRow === row.id;
 
                   return (
                     <React.Fragment key={row.id}>
                       <TableRow
                         hover
-                        onClick={(event) => handleClick(event, row.id as unknown as string)}
+                        onClick={(event) => handleClick(event, row.id as unknown as number)}
                         role="checkbox"
                         aria-checked={isItemSelected}
                         tabIndex={-1}
@@ -542,7 +548,7 @@ export default function EnhancedUserTable(props: TableProps) {
                           <Collapse in={isOpen}>
                             <div style={{ padding: '16px 0' }}>
                               <Typography variant="h6" gutterBottom component="div">
-                                {`User ${index + 1}`}
+                                <a href={`${URL}/qr/${row.id}`} target="_blank" rel="noreferrer">Generate QR Code</a>
                               </Typography>
                               <Typography variant="body1" component="div" style={{ marginTop: '16px' }}>
                                 <b>Name:</b>
@@ -551,14 +557,39 @@ export default function EnhancedUserTable(props: TableProps) {
                                 {' '}
                                 <br />
                                 <br />
-                                <b>Date Last Serviced:</b>
+                                <b>Type:</b>
                                 {' '}
-                                {row.lastMaintenanceDate}
+                                {row.equipmentType}
+                                <br />
+                                <br />
+                                <b>Model:</b>
+                                {' '}
+                                {row.model}
+                                <br />
+                                <br />
+                                <b>Manufacturer:</b>
+                                {' '}
+                                {row.manufacturer}
                                 <br />
                                 <br />
                                 <b>Location:</b>
                                 {' '}
                                 {row.location}
+                                <br />
+                                <br />
+                                <b>Serial Number:</b>
+                                {' '}
+                                {row.serialNumber}
+                                <br />
+                                <br />
+                                <b>Date Last Serviced:</b>
+                                {' '}
+                                {JSON.stringify(row.lastMaintenanceDate)}
+                                <br />
+                                <br />
+                                <b>Date Installed:</b>
+                                {' '}
+                                {JSON.stringify(row.dateInstalled)}
                               </Typography>
                             </div>
                           </Collapse>
