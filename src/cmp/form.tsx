@@ -9,7 +9,7 @@ import {
 } from '@mui/material';
 import priorities from './priorities.json';
 import problems from './problems.json';
-import { Equipment } from './equipment';
+import { Equipment } from './interfaces/equipment';
 
 interface EquipmentResponse {
   equipment_table: Equipment[];

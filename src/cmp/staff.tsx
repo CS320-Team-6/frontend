@@ -2,8 +2,10 @@
 import React, { useState } from 'react';
 import { Box, Button } from '@mui/material';
 import EnhancedTable from './table';
+import EnhancedEquipmentTable from './equipmentTable';
 import EnhancedUserTable from './userTable';
 import { User } from './interfaces/user';
+import { Equipment } from './interfaces/equipment';
 
 interface Issue {
   id: number;
@@ -30,31 +32,6 @@ interface Issue {
   notes: string | null;
 }
 
-interface Equipment {
-  id: number,
-  name: string,
-  equipmentType: string,
-  manufacturer: string,
-  model: string,
-  serialNumber: string,
-  location: string,
-  dateInstalled: {
-    year: number,
-    month: number,
-    day: number
-  },
-  lastMaintenanceDate: {
-    year: number,
-    month: number,
-    day: number
-  }
-}
-/* interface User {
-  firstName: string;
-  lastName: string;
-  email: string;
-  role: string;
-} */
 interface IssueResponse {
   issue_table: Issue[];
 }
@@ -88,6 +65,7 @@ export default function Staff() {
     setEquipment(resJSON.equipment_table);
     setHasEquipment(true);
     setActiveTable('equipment');
+    return Promise.resolve(resJSON.equipment_table);
   };
 
   const getUsers = async () => {
@@ -135,7 +113,7 @@ export default function Staff() {
         </Button>
       </Box>
       {hasData && activeTable === 'issues' && <EnhancedTable URL={`${URL}/issue`} issues={data} getData={getData} />}
-      {hasEquipment && activeTable === 'equipment' && JSON.stringify(equipment)}
+      {hasEquipment && activeTable === 'equipment' && <EnhancedEquipmentTable URL={`${URL}/equipment`} equipment={equipment} getData={getEquipment} />}
       {hasUsers && activeTable === 'users' && <EnhancedUserTable URL={`${URL}/user`} issues={users} getData={getUsers} />}
     </>
   );
