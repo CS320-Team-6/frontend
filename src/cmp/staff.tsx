@@ -44,7 +44,7 @@ export default function Staff() {
   const [equipment, setEquipment] = useState(new Array<Equipment>());
   const [hasData, setHasData] = useState(false);
   const [hasEquipment, setHasEquipment] = useState(false);
-  const [activeTable, setActiveTable] = useState('');
+  const [activeTable, setActiveTable] = useState('issues');
   const [users, setUsers] = useState(new Array<User>());
   const [hasUsers, setHasUsers] = useState(false);
   const URL = 'https://urepair.me';
