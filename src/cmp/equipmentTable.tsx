@@ -471,9 +471,9 @@ export default function EnhancedUserTable(props: TableProps) {
               label="Last Maintenance Date"
               value={dayjs(`${editLastMaintenanceDate?.year}-${editLastMaintenanceDate?.month}-${editLastMaintenanceDate?.day}`)}
               onChange={(newValue) => setEditLastMaintenanceDate({
-                day: newValue?.day(),
-                month: newValue?.month(),
+                month: typeof newValue?.month() === 'number' ? newValue.month() + 1 : undefined,
                 year: newValue?.year(),
+                day: newValue?.date(),
               })}
             />
             <TextField
