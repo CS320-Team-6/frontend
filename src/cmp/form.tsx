@@ -163,7 +163,6 @@ export default function Form() {
             onInputChange={handleEquipmentChange}
             renderInput={(params) => (
               <TextField
-                // eslint-disable-next-line react/jsx-props-no-spreading
                 {...params}
                 label="Broken Equipment"
               />
@@ -191,7 +190,6 @@ export default function Form() {
           onInputChange={handleProblemChange}
           renderInput={(params) => (
             <TextField
-                // eslint-disable-next-line react/jsx-props-no-spreading
               {...params}
               label="Whats wrong?"
             />
