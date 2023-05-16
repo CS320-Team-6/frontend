@@ -284,9 +284,12 @@ export default function EnhancedUserTable(props: TableProps) {
   const [editOpen, setEditOpen] = React.useState(false);
   const [editFirstName, setEditFirstName] = React.useState('');
   const [editLastName, setEditLastName] = React.useState('');
+
   const [editRole, setEditRole] = React.useState('');
   const [newFirstName, setNewFirstName] = React.useState('');
   const [newLastName, setNewLastName] = React.useState('');
+  const [newEmail, setNewEmail] = React.useState('');
+
   const [newRole, setNewRole] = React.useState('');
   const [selectedRow, setSelectedRow] = React.useState<string>('');
 
@@ -473,11 +476,13 @@ export default function EnhancedUserTable(props: TableProps) {
   const newUser = async (
     firstName: string,
     lastName: string,
+    email: string,
     role: string,
   ) => {
     const newUserBody = {
       firstName,
       lastName,
+      email,
       role,
     };
     await fetch(URL, {
@@ -496,12 +501,14 @@ export default function EnhancedUserTable(props: TableProps) {
     await newUser(
       newFirstName,
       newLastName,
-      newRole
+      newEmail,
+      newRole.toUpperCase(),
     );
     const data = await getData();
     setRows(data);
     setNewFirstName('');
     setNewLastName('');
+    setNewEmail('');
     setNewRole('');
   };
 
@@ -545,6 +552,14 @@ export default function EnhancedUserTable(props: TableProps) {
               variant="outlined"
               value={newLastName}
               onChange={(e) => setNewLastName(e.target.value)}
+            />
+            <TextField
+              label="Email"
+              multiline
+              rows={1}
+              variant="outlined"
+              value={newEmail}
+              onChange={(e) => setNewEmail(e.target.value)}
             />
             <TextField
               label="Role"
