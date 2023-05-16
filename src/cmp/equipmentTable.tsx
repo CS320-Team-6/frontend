@@ -4,6 +4,7 @@ import { alpha } from '@mui/material/styles';
 // import CheckIcon from '@mui/icons-material/Check';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
+import AddIcon from '@mui/icons-material/Add';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import {
   Box,
@@ -172,11 +173,12 @@ interface EnhancedTableToolbarProps {
   numSelected: number;
   handleDelete: () => void;
   handleEdit: () => void;
+  handleAdd: () => void;
 }
 
 function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
   const {
-    numSelected, handleDelete, handleEdit,
+    numSelected, handleDelete, handleEdit, handleAdd,
   } = props;
 
   return (
@@ -213,6 +215,13 @@ function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
           Equipment
         </Typography>
       )}
+      {numSelected === 0 ? (
+        <Tooltip title="Add New">
+          <IconButton onClick={handleAdd}>
+            <AddIcon />
+          </IconButton>
+        </Tooltip>
+      ) : null}
       {numSelected === 1 ? (
         <Tooltip title="Edit">
           <IconButton onClick={handleEdit}>
@@ -248,10 +257,19 @@ export default function EnhancedUserTable(props: TableProps) {
   const [visibleRows, setVisibleRows] = React.useState<Equipment[] | null>(null);
   const [rowsPerPage, setRowsPerPage] = React.useState(DEFAULT_ROWS_PER_PAGE);
   const [paddingHeight, setPaddingHeight] = React.useState(0);
+  const [addOpen, setAddOpen] = React.useState(false);
   const [editOpen, setEditOpen] = React.useState(false);
   const [editName, setEditName] = React.useState('');
   const [editLastMaintenanceDate, setEditLastMaintenanceDate] = React.useState<DateInfo>();
   const [editLocation, setEditLocation] = React.useState('');
+  const [newName, setNewName] = React.useState('');
+  const [newLocation, setNewLocation] = React.useState('');
+  const [newModel, setNewModel] = React.useState('');
+  const [newManufacturer, setNewManufacturer] = React.useState('');
+  const [newSerial, setNewSerial] = React.useState('');
+  const [newEquipmentType, setNewEquipmentType] = React.useState('');
+  const [newDateInstalled, setNewDateInstalled] = React.useState<DateInfo>();
+  const [newLastMaintenanceDate, setNewLastMaintenanceDate] = React.useState<DateInfo>();
   const [selectedRow, setSelectedRow] = React.useState<number>(-1);
 
   React.useEffect(() => {
@@ -403,6 +421,10 @@ export default function EnhancedUserTable(props: TableProps) {
     setVisibleRows(updatedRows as Equipment[] | null);
   }, [rows]);
 
+  const handleAdd = () => {
+    setAddOpen(true);
+  };
+
   const handleEdit = () => {
     // set the default values for the edit form
     const selectedEquipment = rows.find((eq) => eq.id === selected[0]) as Equipment;
@@ -434,6 +456,61 @@ export default function EnhancedUserTable(props: TableProps) {
     });
   };
 
+  const newEquipment = async (
+    name: string,
+    location: string,
+    model: string,
+    manufacturer: string,
+    serialNumber: string,
+    type: string,
+    dateInstalled?: DateInfo,
+    lastMaintenanceDate?: DateInfo,
+  ) => {
+    const newEquipmentBody = {
+      name,
+      dateInstalled,
+      equipmentType: type,
+      location,
+      manufacturer,
+      model,
+      serialNumber,
+      lastMaintenanceDate,
+    };
+    await fetch(URL, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify(newEquipmentBody),
+    });
+  };
+
+  const handleNewSubmit = async () => {
+    setAddOpen(false);
+    await newEquipment(
+      newName,
+      newLocation,
+      newModel,
+      newManufacturer,
+      newSerial,
+      newEquipmentType,
+      newDateInstalled,
+      newLastMaintenanceDate,
+    );
+    const data = await getData();
+    setRows(data);
+    setNewName('');
+    setNewLocation('');
+    setNewModel('');
+    setNewManufacturer('');
+    setNewSerial('');
+    setNewEquipmentType('');
+    setNewDateInstalled(undefined);
+    setNewLastMaintenanceDate(undefined);
+  };
+
   const handleEditSubmit = async () => {
     setEditOpen(false);
     await editEquipment(selected[0], editName, editLocation, editLastMaintenanceDate);
@@ -454,7 +531,85 @@ export default function EnhancedUserTable(props: TableProps) {
           numSelected={selected.length}
           handleDelete={handleDelete}
           handleEdit={handleEdit}
+          handleAdd={handleAdd}
         />
+        <Dialog open={addOpen} PaperProps={{ sx: { width: '60%' } }}>
+          <DialogTitle>Add New Equipment</DialogTitle>
+          <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <TextField
+              label="Name"
+              multiline
+              rows={1}
+              variant="outlined"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+            />
+            <TextField
+              label="Location"
+              multiline
+              rows={1}
+              variant="outlined"
+              value={newLocation}
+              onChange={(e) => setNewLocation(e.target.value)}
+            />
+            <TextField
+              label="Model"
+              multiline
+              rows={1}
+              variant="outlined"
+              value={newModel}
+              onChange={(e) => setNewModel(e.target.value)}
+            />
+            <TextField
+              label="Manufacturer"
+              multiline
+              rows={1}
+              variant="outlined"
+              value={newManufacturer}
+              onChange={(e) => setNewManufacturer(e.target.value)}
+            />
+            <TextField
+              label="Serial Number"
+              multiline
+              rows={1}
+              variant="outlined"
+              value={newSerial}
+              onChange={(e) => setNewSerial(e.target.value)}
+            />
+            <TextField
+              label="Equipment Type"
+              multiline
+              rows={1}
+              variant="outlined"
+              value={newEquipmentType}
+              onChange={(e) => setNewEquipmentType(e.target.value)}
+            />
+            <DatePicker
+              label="Date Instaled"
+              value={dayjs(`${newDateInstalled?.year}-${newDateInstalled?.month}-${newDateInstalled?.day}`)}
+              onChange={(newValue) => setNewDateInstalled({
+                month: typeof newValue?.month() === 'number' ? newValue.month() + 1 : undefined,
+                year: newValue?.year(),
+                day: newValue?.date(),
+              })}
+            />
+            <DatePicker
+              label="Last Maintenence Date"
+              value={dayjs(`${newLastMaintenanceDate?.year}-${newLastMaintenanceDate?.month}-${newLastMaintenanceDate?.day}`)}
+              onChange={(newValue) => setNewLastMaintenanceDate({
+                month: typeof newValue?.month() === 'number' ? newValue.month() + 1 : undefined,
+                year: newValue?.year(),
+                day: newValue?.date(),
+              })}
+            />
+          </DialogContent>
+          <DialogActions sx={{ padding: '16px' }}>
+            <Button onClick={() => setAddOpen(false)}>Cancel</Button>
+            <Button variant="contained" onClick={handleNewSubmit} color="primary">
+              Submit
+            </Button>
+          </DialogActions>
+        </Dialog>
         <Dialog open={editOpen} PaperProps={{ sx: { width: '60%' } }}>
           <DialogTitle>Edit Equipment</DialogTitle>
           <Box sx={{ width: '100%', height: '8px' }} />
@@ -462,7 +617,7 @@ export default function EnhancedUserTable(props: TableProps) {
             <TextField
               label="Name"
               multiline
-              rows={6}
+              rows={1}
               variant="outlined"
               value={editName}
               onChange={(e) => setEditName(e.target.value)}
@@ -471,15 +626,15 @@ export default function EnhancedUserTable(props: TableProps) {
               label="Last Maintenance Date"
               value={dayjs(`${editLastMaintenanceDate?.year}-${editLastMaintenanceDate?.month}-${editLastMaintenanceDate?.day}`)}
               onChange={(newValue) => setEditLastMaintenanceDate({
-                day: newValue?.day(),
-                month: newValue?.month(),
+                month: typeof newValue?.month() === 'number' ? newValue.month() + 1 : undefined,
                 year: newValue?.year(),
+                day: newValue?.date(),
               })}
             />
             <TextField
               label="Location"
               multiline
-              rows={6}
+              rows={1}
               variant="outlined"
               value={editLocation}
               onChange={(e) => setEditLocation(e.target.value)}
@@ -587,12 +742,12 @@ export default function EnhancedUserTable(props: TableProps) {
                                 <br />
                                 <b>Date Last Serviced:</b>
                                 {' '}
-                                {JSON.stringify(row.lastMaintenanceDate)}
+                                {`${row.lastMaintenanceDate.month}-${row.lastMaintenanceDate.day}-${row.lastMaintenanceDate.year}`}
                                 <br />
                                 <br />
                                 <b>Date Installed:</b>
                                 {' '}
-                                {JSON.stringify(row.dateInstalled)}
+                                {`${row.dateInstalled.month}-${row.dateInstalled.day}-${row.dateInstalled.year}`}
                               </Typography>
                             </div>
                           </Collapse>
