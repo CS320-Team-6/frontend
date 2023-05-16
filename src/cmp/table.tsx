@@ -28,6 +28,7 @@ import {
   TextField,
   Toolbar,
   Tooltip,
+  Popover,
   Typography,
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
@@ -293,17 +294,76 @@ function EnhancedTableHead(props: EnhancedTableProps) {
 
 interface EnhancedTableToolbarProps {
   numSelected: number;
+  users: User[];
   handleResolve: () => void;
   handleMerge: () => void;
   handleDelete: () => void;
   handleEdit: () => void;
+  handleFilter: (filterAttribute: string, filterValue: any) => void;
+  setFilter: (value: boolean) => void;
 }
 
 function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
   const {
-    numSelected, handleResolve, handleMerge, handleDelete, handleEdit,
+    numSelected, users, handleResolve, handleMerge, handleDelete,
+    handleEdit, handleFilter, setFilter,
   } = props;
+  const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(null);
+  const [filterOn, setFilterOn] = React.useState(false);
+  const [filterAttribute, setFilterAttribute] = React.useState('equipmentId');
+  const [filterValue, setFilterValue] = React.useState('');
 
+  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setAnchorEl(event.currentTarget);
+    setFilter(true);
+    setFilterOn(true);
+  };
+
+  const handleFilterClear = () => {
+    setFilterOn(false);
+    setFilter(false);
+    setFilterAttribute('equipmentId');
+    setFilterValue('1');
+    setAnchorEl(null);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  const open = Boolean(anchorEl);
+  const id = open ? 'simple-popover' : undefined;
+
+  const handleFilterAttributeChange = (event: SelectChangeEvent) => {
+    const { value } = event.target;
+    setFilterAttribute(value);
+  };
+
+  const handleFilterValueChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const { value } = event.target;
+    setFilterValue(value);
+  };
+
+  const handleFilterValueChangeSelect = (event: SelectChangeEvent) => {
+    const { value } = event.target;
+    setFilterValue(value);
+  };
+
+  React.useEffect(() => {
+    handleFilter(filterAttribute, filterValue);
+  }, [filterAttribute, filterValue, filterOn]);
+
+  React.useEffect(() => {
+    if (filterAttribute === 'equipmentId') {
+      setFilterValue('1');
+    } else if (filterAttribute === 'status') {
+      setFilterValue('NEW');
+    } else if (filterAttribute === 'assignedTo') {
+      setFilterValue('NULL');
+    }
+  }, [filterAttribute]);
+
+  /* eslint-disable no-nested-ternary */
   return (
     <Toolbar
       sx={{
@@ -366,11 +426,93 @@ function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
           </Tooltip>
         </>
       ) : (
-        <Tooltip title="Filter list">
-          <IconButton>
-            <FilterListIcon />
-          </IconButton>
-        </Tooltip>
+        <>
+          <Tooltip title="Filter list">
+            <IconButton aria-describedby={id} onClick={handleClick}>
+              <FilterListIcon />
+            </IconButton>
+          </Tooltip>
+          <Popover
+            id={id}
+            open={open}
+            anchorEl={anchorEl}
+            onClose={handleClose}
+            anchorOrigin={{
+              vertical: 'bottom',
+              horizontal: 'left',
+            }}
+          >
+            <Box sx={{
+              p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px',
+            }}
+            >
+              <FormControl fullWidth>
+                <InputLabel id="attribute-select-label">Attribute</InputLabel>
+                <Select
+                  labelId="attribute-select-label"
+                  id="attribute-select"
+                  value={filterAttribute}
+                  onChange={handleFilterAttributeChange}
+                  size="small"
+                >
+                  <MenuItem value="equipmentId">Equipment ID</MenuItem>
+                  <MenuItem value="status">Status</MenuItem>
+                  <MenuItem value="assignedTo">Assigned To</MenuItem>
+                </Select>
+              </FormControl>
+              {filterAttribute === 'equipmentId' ? (
+                <TextField
+                  id="value-input"
+                  type="number"
+                  fullWidth
+                  value={filterValue}
+                  onChange={handleFilterValueChange}
+                  size="small"
+                />
+              ) : filterAttribute === 'status' ? (
+                <Select
+                  id="value-select"
+                  fullWidth
+                  value={filterValue}
+                  onChange={handleFilterValueChangeSelect}
+                  size="small"
+                >
+                  {[
+                    { value: 'NEW', label: 'New' },
+                    { value: 'IN_PROGRESS', label: 'In Progress' },
+                    { value: 'CLOSED', label: 'Closed' },
+                    { value: 'RESOLVED', label: 'Resolved' },
+                  ].map((option) => (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              ) : (
+                <Select
+                  id="value-select"
+                  fullWidth
+                  value={filterValue}
+                  onChange={handleFilterValueChangeSelect}
+                  size="small"
+                >
+                  {users.map((user) => (
+                    <MenuItem key={user.email} value={user.email}>
+                      {user.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              )}
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={handleFilterClear}
+              >
+                Clear
+              </Button>
+            </Box>
+          </Popover>
+        </>
       )}
     </Toolbar>
   );
@@ -401,6 +543,8 @@ export default function EnhancedTable(props: TableProps) {
   const [editPriority, setEditPriority] = React.useState('');
   const [users, setUsers] = React.useState<User[]>([]);
   const [selectedRow, setSelectedRow] = React.useState<string>('');
+  const [allRows, setAllRows] = React.useState<Issue[]>([]);
+  const [filterOn, setFilterOn] = React.useState(false);
 
   React.useEffect(() => {
     let rowsOnMount = stableSort(
@@ -412,6 +556,7 @@ export default function EnhancedTable(props: TableProps) {
       DEFAULT_ROWS_PER_PAGE,
     );
     setVisibleRows(rowsOnMount as Issue[] | null);
+    setAllRows(rows);
   }, []);
 
   const handleRequestSort = React.useCallback(
@@ -477,6 +622,7 @@ export default function EnhancedTable(props: TableProps) {
         selected.slice(selectedIndex + 1),
       );
     }
+
     setSelected(newSelected);
   };
 
@@ -494,10 +640,10 @@ export default function EnhancedTable(props: TableProps) {
       // Avoid a layout jump when reaching the last page with empty rows.
       const numEmptyRows = newPage > 0 ? Math.max(0, (1 + newPage) * rowsPerPage - rows.length) : 0;
 
-      const newPaddingHeight = (dense ? 33 : 53) * numEmptyRows;
+      const newPaddingHeight = 33 * numEmptyRows;
       setPaddingHeight(newPaddingHeight);
     },
-    [order, orderBy, dense, rowsPerPage],
+    [order, orderBy, rowsPerPage],
   );
 
   const handleChangeRowsPerPage = React.useCallback(
@@ -519,10 +665,6 @@ export default function EnhancedTable(props: TableProps) {
     },
     [order, orderBy],
   );
-
-  const handleChangeDense = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setDense(event.target.checked);
-  };
 
   const isSelected = (name: string) => selected.indexOf(name) !== -1;
 
@@ -584,6 +726,7 @@ export default function EnhancedTable(props: TableProps) {
     const data = await getData();
     setSelected([]);
     // update the rows in the table
+    // @ts-ignore
     setRows(data);
   };
 
@@ -613,6 +756,7 @@ export default function EnhancedTable(props: TableProps) {
         : b),
     );
     const mergedDescription = selectedIssues.map((issue) => issue.description).join('\n');
+    const mergedNotes = selectedIssues.map((issue) => issue.notes).join('\n');
     const date = new Date();
     const newIssue = {
       id: 1,
@@ -630,7 +774,7 @@ export default function EnhancedTable(props: TableProps) {
       assignedTo: null,
       dateResolved: null,
       resolutionDetails: null,
-      notes: null,
+      notes: mergedNotes,
     };
     // create the new issue
     await fetch(URL, {
@@ -653,6 +797,7 @@ export default function EnhancedTable(props: TableProps) {
 
     setSelected([]);
     // update the rows in the table
+    // @ts-ignore
     setRows(data);
   };
 
@@ -740,16 +885,46 @@ export default function EnhancedTable(props: TableProps) {
     setEditPriority('');
   };
 
+  const handleFilter = (filterAttribute: string, filterValue: any) => {
+    // filter the rows based on filterAttribute and filterValue
+    if (!filterOn) {
+      return;
+    }
+
+    let newRows: Issue[];
+
+    if (allRows.length === 0) {
+      return;
+    }
+
+    if (filterValue.length === 0) {
+      setRows(allRows);
+      return;
+    }
+
+    if (filterAttribute === 'assignedTo' && filterValue === 'NULL') {
+      newRows = allRows.filter((issue) => issue.assignedTo === null);
+    } else {
+      /* eslint-disable eqeqeq */
+      // @ts-ignore
+      newRows = allRows.filter((issue) => issue[filterAttribute] == filterValue);
+    }
+
+    // set new rows
+    setRows(newRows);
+  };
+
+  React.useEffect(() => {
+    if (!filterOn && allRows.length > 0) {
+      setRows(allRows);
+    }
+  }, [filterOn]);
+
+  /* eslint-disable max-len */
   return (
     <Box sx={{ width: '100%' }}>
       <Paper sx={{ width: '100%', mb: 2 }}>
-        <EnhancedTableToolbar
-          numSelected={selected.length}
-          handleResolve={handleResolve}
-          handleMerge={handleMerge}
-          handleDelete={handleDelete}
-          handleEdit={handleEdit}
-        />
+        <EnhancedTableToolbar numSelected={selected.length} users={users} handleResolve={handleResolve} handleMerge={handleMerge} handleDelete={handleDelete} handleEdit={handleEdit} handleFilter={handleFilter} setFilter={setFilterOn} />
         <Dialog open={resolveDetailOpen} PaperProps={{ sx: { width: '60%' } }}>
           <DialogTitle>Resolution Details</DialogTitle>
           <DialogContent>
@@ -839,7 +1014,7 @@ export default function EnhancedTable(props: TableProps) {
           <Table
             sx={{ minWidth: 750 }}
             aria-labelledby="tableTitle"
-            size={dense ? 'small' : 'medium'}
+            size="small"
           >
             <EnhancedTableHead
               numSelected={selected.length}
@@ -952,10 +1127,6 @@ export default function EnhancedTable(props: TableProps) {
           onRowsPerPageChange={handleChangeRowsPerPage}
         />
       </Paper>
-      <FormControlLabel
-        control={<Switch checked={dense} onChange={handleChangeDense} />}
-        label="Dense padding"
-      />
     </Box>
   );
 }
