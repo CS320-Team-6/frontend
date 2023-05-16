@@ -398,8 +398,8 @@ export default function EnhancedUserTable(props: TableProps) {
 
   const handleDelete = async () => {
     // delete selected equipment
-    await Promise.all(selected.map(async (user) => {
-      await fetch(`${URL}/${user}`, {
+    await Promise.all(selected.map(async (eq) => {
+      await fetch(`${URL}/${eq}`, {
         method: 'DELETE',
         credentials: 'include',
       });
@@ -742,12 +742,26 @@ export default function EnhancedUserTable(props: TableProps) {
                                 <br />
                                 <b>Date Last Serviced:</b>
                                 {' '}
-                                {`${row.lastMaintenanceDate.month}-${row.lastMaintenanceDate.day}-${row.lastMaintenanceDate.year}`}
+                                {
+                                  (row.lastMaintenanceDate !== undefined
+                                   && 'month' in row.lastMaintenanceDate
+                                   && 'day' in row.lastMaintenanceDate
+                                   && 'year' in row.lastMaintenanceDate)
+                                    ? `${row.lastMaintenanceDate.month}-${row.lastMaintenanceDate.day}-${row.lastMaintenanceDate.year}`
+                                    : 'No date provided'
+                                }
                                 <br />
                                 <br />
                                 <b>Date Installed:</b>
                                 {' '}
-                                {`${row.dateInstalled.month}-${row.dateInstalled.day}-${row.dateInstalled.year}`}
+                                {
+                                  (row.dateInstalled !== undefined
+                                   && 'month' in row.dateInstalled
+                                   && 'day' in row.dateInstalled
+                                   && 'year' in row.dateInstalled)
+                                    ? `${row.dateInstalled.month}-${row.dateInstalled.day}-${row.dateInstalled.year}`
+                                    : 'No date provided'
+                                }
                               </Typography>
                             </div>
                           </Collapse>
