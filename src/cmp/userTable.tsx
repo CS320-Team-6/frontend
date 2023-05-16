@@ -2,6 +2,7 @@ import * as React from 'react';
 import { alpha } from '@mui/material/styles';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
+import AddIcon from '@mui/icons-material/Add';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import {
   Box,
@@ -195,11 +196,12 @@ interface EnhancedTableToolbarProps {
   numSelected: number;
   handleDelete: () => void;
   handleEdit: () => void;
+  handleAdd: () => void;
 }
 
 function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
   const {
-    numSelected, handleDelete, handleEdit,
+    numSelected, handleDelete, handleEdit, handleAdd,
   } = props;
 
   return (
@@ -236,6 +238,13 @@ function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
           Users
         </Typography>
       )}
+      {numSelected === 0 ? (
+        <Tooltip title="Add New">
+          <IconButton onClick={handleAdd}>
+            <AddIcon />
+          </IconButton>
+        </Tooltip>
+      ) : null}
       {numSelected === 1 ? (
         <Tooltip title="Edit">
           <IconButton onClick={handleEdit}>
@@ -271,10 +280,14 @@ export default function EnhancedUserTable(props: TableProps) {
   const [visibleRows, setVisibleRows] = React.useState<User[] | null>(null);
   const [rowsPerPage, setRowsPerPage] = React.useState(DEFAULT_ROWS_PER_PAGE);
   const [paddingHeight, setPaddingHeight] = React.useState(0);
+  const [addOpen, setAddOpen] = React.useState(false);
   const [editOpen, setEditOpen] = React.useState(false);
   const [editFirstName, setEditFirstName] = React.useState('');
   const [editLastName, setEditLastName] = React.useState('');
   const [editRole, setEditRole] = React.useState('');
+  const [newFirstName, setNewFirstName] = React.useState('');
+  const [newLastName, setNewLastName] = React.useState('');
+  const [newRole, setNewRole] = React.useState('');
   const [selectedRow, setSelectedRow] = React.useState<string>('');
 
   React.useEffect(() => {
@@ -426,6 +439,10 @@ export default function EnhancedUserTable(props: TableProps) {
     setVisibleRows(updatedRows as User[] | null);
   }, [rows]);
 
+  const handleAdd = () => {
+    setAddOpen(true);
+  };
+
   const handleEdit = () => {
     // set the default values for the edit form
     const selectedUser = rows.find((user) => user.email === selected[0]) as User;
@@ -453,6 +470,41 @@ export default function EnhancedUserTable(props: TableProps) {
     });
   };
 
+  const newUser = async (
+    firstName: string,
+    lastName: string,
+    role: string,
+  ) => {
+    const newUserBody = {
+      firstName,
+      lastName,
+      role,
+    };
+    await fetch(URL, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify(newUserBody),
+    });
+  };
+
+  const handleNewSubmit = async () => {
+    setAddOpen(false);
+    await newUser(
+      newFirstName,
+      newLastName,
+      newRole
+    );
+    const data = await getData();
+    setRows(data);
+    setNewFirstName('');
+    setNewLastName('');
+    setNewRole('');
+  };
+
   const handleEditSubmit = async () => {
     setEditOpen(false);
     await editUser(editFirstName, editLastName, selected[0], editRole);
@@ -473,7 +525,43 @@ export default function EnhancedUserTable(props: TableProps) {
           numSelected={selected.length}
           handleDelete={handleDelete}
           handleEdit={handleEdit}
+          handleAdd={handleAdd}
         />
+        <Dialog open={addOpen} PaperProps={{ sx: { width: '60%' } }}>
+          <DialogTitle>Add New User</DialogTitle>
+          <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <TextField
+              label="FirstName"
+              multiline
+              rows={1}
+              variant="outlined"
+              value={newFirstName}
+              onChange={(e) => setNewFirstName(e.target.value)}
+            />
+            <TextField
+              label="LastName"
+              multiline
+              rows={1}
+              variant="outlined"
+              value={newLastName}
+              onChange={(e) => setNewLastName(e.target.value)}
+            />
+            <TextField
+              label="Role"
+              multiline
+              rows={1}
+              variant="outlined"
+              value={newRole}
+              onChange={(e) => setNewRole(e.target.value)}
+            />
+          </DialogContent>
+          <DialogActions sx={{ padding: '16px' }}>
+            <Button onClick={() => setAddOpen(false)}>Cancel</Button>
+            <Button variant="contained" onClick={handleNewSubmit} color="primary">
+              Submit
+            </Button>
+          </DialogActions>
+        </Dialog>
         <Dialog open={editOpen} PaperProps={{ sx: { width: '60%' } }}>
           <DialogTitle>Edit User</DialogTitle>
           <Box sx={{ width: '100%', height: '8px' }} />
