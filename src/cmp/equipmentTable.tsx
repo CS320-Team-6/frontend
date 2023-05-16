@@ -587,12 +587,12 @@ export default function EnhancedUserTable(props: TableProps) {
                                 <br />
                                 <b>Date Last Serviced:</b>
                                 {' '}
-                                {JSON.stringify(row.lastMaintenanceDate)}
+                                {`${row.lastMaintenanceDate.month}-${row.lastMaintenanceDate.day}-${row.lastMaintenanceDate.year}`}
                                 <br />
                                 <br />
                                 <b>Date Installed:</b>
                                 {' '}
-                                {JSON.stringify(row.dateInstalled)}
+                                {`${row.dateInstalled.month}-${row.dateInstalled.day}-${row.dateInstalled.year}`}
                               </Typography>
                             </div>
                           </Collapse>
